@@ -46,8 +46,8 @@ export default function GoalsPage() {
                 🚀 Coming Soon!
               </CardTitle>
               <p className="text-muted-foreground mt-2">
-                We're working on an exciting new feature that will revolutionize
-                how you set and achieve your learning goals.
+                We&apos;re working on an exciting new feature that will
+                revolutionize how you set and achieve your learning goals.
               </p>
             </CardHeader>
             <CardContent className="text-center space-y-6">

@@ -9,7 +9,7 @@ import { childrenApi } from "@/lib/api/children";
 import { parentApi } from "@/lib/api/parent";
 import { courseApi } from "@/lib/api/course";
 import { useToast } from "@/hooks/use-toast";
-import type { IStudent, ICourse } from "@/types/dashboard";
+import type { IStudent, ICourse, ICreateStudentDto } from "@/types/dashboard";
 
 export default function ChildrenPage() {
   const { data: session } = useSession();
@@ -24,8 +24,10 @@ export default function ChildrenPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (session?.user?.id) {
+      loadData();
+    }
+  }, [session?.user?.id]);
 
   const loadData = async () => {
     try {
@@ -97,6 +99,11 @@ export default function ChildrenPage() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditChild = (child: IStudent) => {
+    // TODO: Implement edit functionality
+    console.log("Edit child:", child);
   };
 
   const handleManageCourses = (child: IStudent) => {
@@ -174,7 +181,7 @@ export default function ChildrenPage() {
       <AddChildDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
-        parentId={session?.user?.id ? undefined : undefined}
+        parentId={session?.user?.id}
       />
 
       <ManageCoursesDialog

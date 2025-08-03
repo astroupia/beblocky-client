@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { ProgressOverview } from "@/components/progress/progress-overview";
@@ -35,9 +35,9 @@ export default function ProgressPage() {
     if (session?.user?.id) {
       loadProgressData();
     }
-  }, [session?.user?.id]);
+  }, [session?.user?.id, loadProgressData]);
 
-  const loadProgressData = async () => {
+  const loadProgressData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
