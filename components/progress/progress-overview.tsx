@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import type { IStudent, ICourse } from "@/types/dashboard";
 
 interface ProgressOverviewProps {
-  children: Array<{
+  data: Array<{
     child: IStudent;
     courses: Array<{
       course: ICourse;
@@ -32,7 +32,7 @@ interface ProgressOverviewProps {
 }
 
 export function ProgressOverview({
-  children,
+  data: children,
   onViewDetails,
 }: ProgressOverviewProps) {
   const getOverallProgress = (courses: any[]) => {

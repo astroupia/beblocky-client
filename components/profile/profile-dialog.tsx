@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@/lib/auth-client";
 import { userApi } from "@/lib/api/user";
 import { parentApi } from "@/lib/api/parent";
@@ -29,13 +29,7 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   const [userData, setUserData] = useState<IUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (open && session?.user?.id) {
-      fetchUserData();
-    }
-  }, [open, session?.user?.id]);
-
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     if (!session?.user?.id) {
       setLoading(false);
       return;
@@ -50,7 +44,13 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    if (open && session?.user?.id) {
+      fetchUserData();
+    }
+  }, [open, session?.user?.id, fetchUserData]);
 
   const handleClose = () => {
     onOpenChange(false);

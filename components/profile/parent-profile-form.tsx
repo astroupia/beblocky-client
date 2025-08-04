@@ -92,7 +92,7 @@ export function ParentProfileForm({ userData }: ParentProfileFormProps) {
       // Get parent data first to get the parent ID
       const parentData = await parentApi.getParentByUserId(userData._id);
       // Update parent information using the parent API
-      await parentApi.updateParent(parentData._id, parentForm);
+      await parentApi.updateParent(parentData._id, parentForm as any);
       toast.success("Parent information updated successfully!");
     } catch (error) {
       console.error("Failed to update parent:", error);

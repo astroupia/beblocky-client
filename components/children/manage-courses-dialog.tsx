@@ -278,7 +278,7 @@ export function ManageCoursesDialog({
                             <div className="flex items-center gap-4 text-sm">
                               <span className="flex items-center gap-1">
                                 <BookOpen className="h-3 w-3" />
-                                {course.lessons.length} lessons
+                                {course.courseLanguage || "Multiple"} lessons
                               </span>
                               {course.rating && (
                                 <span className="flex items-center gap-1">

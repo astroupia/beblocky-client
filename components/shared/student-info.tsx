@@ -57,7 +57,7 @@ export function StudentInfo({ user }: StudentInfoProps) {
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm">
-                Age {getChildAge(user.dateOfBirth)}
+                Age {getChildAge(user.dateOfBirth ? new Date(user.dateOfBirth) : undefined)}
               </span>
             </div>
           )}

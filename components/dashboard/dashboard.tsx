@@ -122,7 +122,7 @@ export function ModernDashboard({
                 </div>
               </div>
               <div className="text-2xl font-bold text-blue-800 dark:text-blue-200">
-                {userType === "student" ? stats.totalCourses : children.length}
+                {userType === "student" ? (stats as any)?.totalCourses || 0 : children.length}
               </div>
               <p className="text-xs text-blue-600 dark:text-blue-400">
                 {userType === "student"
@@ -148,8 +148,8 @@ export function ModernDashboard({
               </div>
               <div className="text-2xl font-bold text-green-800 dark:text-green-200">
                 {userType === "student"
-                  ? `${stats.codingStreak} days`
-                  : stats.activeCourses}
+                  ? `${(stats as any)?.codingStreak || 0} days`
+                  : (stats as any)?.activeChildren || 0}
               </div>
               <p className="text-xs text-green-600 dark:text-green-400">
                 {userType === "student" ? "Keep it up!" : "Currently active"}
@@ -173,11 +173,11 @@ export function ModernDashboard({
               </div>
               <div className="text-2xl font-bold text-purple-800 dark:text-purple-200">
                 {userType === "student"
-                  ? stats.totalCoins
-                  : `${stats.averageProgress}%`}
+                  ? (stats as any)?.totalCoins || 0
+                  : `${(stats as any)?.averageProgress || 0}%`}
               </div>
               {userType === "parent" && (
-                <Progress value={stats.averageProgress} className="mt-2 h-2" />
+                <Progress value={(stats as any)?.averageProgress || 0} className="mt-2 h-2" />
               )}
               <p className="text-xs text-purple-600 dark:text-purple-400">
                 {userType === "student"
@@ -198,7 +198,9 @@ export function ModernDashboard({
                 </div>
               </div>
               <div className="text-2xl font-bold text-orange-800 dark:text-orange-200">
-                {Math.floor(stats.timeSpent / 60)}h {stats.timeSpent % 60}m
+                {userType === "student" 
+                  ? `${Math.floor(((stats as any)?.timeSpent || 0) / 60)}h ${((stats as any)?.timeSpent || 0) % 60}m`
+                  : `${Math.floor(((stats as any)?.totalTimeSpent || 0) / 60)}h ${((stats as any)?.totalTimeSpent || 0) % 60}m`}
               </div>
               <p className="text-xs text-orange-600 dark:text-orange-400">
                 Total learning time

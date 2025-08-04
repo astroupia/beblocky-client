@@ -95,7 +95,7 @@ export function PaymentMethodSelector({
         return;
       }
       onSelect(selectedProvider, phoneNumber);
-    } else {
+    } else if (selectedProvider) {
       onSelect(selectedProvider);
     }
   };

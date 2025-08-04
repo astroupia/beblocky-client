@@ -185,7 +185,7 @@ export default function SignUpPage() {
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords don't match");
+      setError("Passwords don&apos;t match");
       return;
     }
     setIsLoading(true);

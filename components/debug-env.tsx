@@ -12,7 +12,7 @@ export function DebugEnv() {
     nodeEnv: undefined,
   });
 
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
   useEffect(() => {
     setEnvInfo({
@@ -37,7 +37,7 @@ export function DebugEnv() {
           <strong>NODE_ENV:</strong> {envInfo.nodeEnv}
         </div>
         <div>
-          <strong>Auth Status:</strong> {status}
+          <strong>Auth Status:</strong> {session ? "authenticated" : "unauthenticated"}
         </div>
         <div>
           <strong>User ID:</strong> {session?.user?.id || "Not logged in"}

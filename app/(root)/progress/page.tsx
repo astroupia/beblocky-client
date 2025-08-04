@@ -31,12 +31,6 @@ export default function ProgressPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (session?.user?.id) {
-      loadProgressData();
-    }
-  }, [session?.user?.id, loadProgressData]);
-
   const loadProgressData = useCallback(async () => {
     try {
       setLoading(true);
@@ -68,7 +62,13 @@ export default function ProgressPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session, toast]);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      loadProgressData();
+    }
+  }, [session?.user?.id, loadProgressData]);
 
   const handleViewDetails = (childId: string) => {
     router.push(`/progress/${childId}`);
@@ -138,7 +138,7 @@ export default function ProgressPage() {
         {/* Progress Overview - Only show if no error and has data */}
         {!error && childrenProgress.length > 0 && (
           <ProgressOverview
-            children={childrenProgress}
+            data={childrenProgress}
             onViewDetails={handleViewDetails}
           />
         )}

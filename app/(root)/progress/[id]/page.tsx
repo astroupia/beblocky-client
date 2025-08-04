@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { StudentInfo } from "@/components/shared/student-info";
 import { Overview } from "@/components/shared/weekly-report";
@@ -13,6 +13,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { studentApi } from "@/lib/api/student";
+import { progressApi } from "@/lib/api/progress";
 import { useToast } from "@/hooks/use-toast";
 import type { IStudent } from "@/types/dashboard";
 import { Button } from "@/components/ui/button";
@@ -42,41 +43,44 @@ export default function StudentProgressPage() {
   const [progress, setProgress] = useState<ProgressData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const loadData = useCallback(
+    async (studentId: string) => {
+      try {
+        setLoading(true);
+        const [userData, progressData] = await Promise.all([
+          studentApi.getStudent(studentId),
+          progressApi.getStudentProgress(studentId),
+        ]);
+
+        if (!userData) {
+          toast({
+            title: "Error",
+            description: "Student not found.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        setUser(userData as unknown as IStudent);
+        setProgress(progressData as any);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load student data. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [toast]
+  );
+
   useEffect(() => {
     if (params.id) {
       loadData(params.id as string);
     }
-  }, [params.id]);
-
-  const loadData = async (studentId: string) => {
-    try {
-      setLoading(true);
-      const [userData, progressData] = await Promise.all([
-        studentApi.getUser(studentId),
-        studentApi.getStudentProgress(studentId),
-      ]);
-
-      if (!userData) {
-        toast({
-          title: "Error",
-          description: "Student not found.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setUser(userData);
-      setProgress(progressData);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load student data. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [params.id, loadData]);
 
   if (loading) {
     return (
@@ -97,7 +101,8 @@ export default function StudentProgressPage() {
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-2">Student not found</h2>
           <p className="text-muted-foreground">
-            The student you're looking for doesn't exist or has been removed.
+            The student you&apos;re looking for doesn&apos;t exist or has been
+            removed.
           </p>
         </div>
       </div>

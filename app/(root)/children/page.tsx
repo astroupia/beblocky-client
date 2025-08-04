@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@/lib/auth-client";
 import { ChildrenList } from "@/components/children/children-list";
 import { AddChildDialog } from "@/components/children/add-child-dialog";
@@ -23,13 +23,7 @@ export default function ChildrenPage() {
   }>({ open: false, child: null });
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (session?.user?.id) {
-      loadData();
-    }
-  }, [session?.user?.id]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       // Get the actual parent ID from the session
@@ -51,7 +45,7 @@ export default function ChildrenPage() {
         toast({
           title: "No Children Found",
           description:
-            "You haven't added any children yet. Add your first child to get started.",
+            "You haven&apos;t added any children yet. Add your first child to get started.",
           variant: "default",
         });
       } else {
@@ -64,7 +58,13 @@ export default function ChildrenPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session, toast]);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      loadData();
+    }
+  }, [session?.user?.id, loadData]);
 
   const handleAddChild = async (data: ICreateStudentDto) => {
     try {

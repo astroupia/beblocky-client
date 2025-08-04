@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { paymentApi } from "@/lib/api/payment";
 import { subscriptionApi } from "@/lib/api/subscription";
-import { PaymentStatus, SubscriptionPlan } from "@/lib/api/payment";
+import { PaymentStatus } from "@/lib/api/payment";
+import { SubscriptionPlan } from "@/types/subscription";
 
 export async function POST(request: NextRequest) {
   try {

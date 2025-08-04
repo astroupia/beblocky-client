@@ -113,7 +113,11 @@ export function StudentProfileForm({ userData }: StudentProfileFormProps) {
       // Get student data first to get the student ID
       const studentData = await studentApi.getStudentByUserId(userData._id);
       // Update student information using the student API
-      await studentApi.updateStudent(studentData._id, studentForm);
+      await studentApi.updateStudent(studentData._id, {
+        ...studentForm,
+        grade: parseInt(studentForm.grade) || 0,
+        gender: studentForm.gender as "male" | "female" | "other" | undefined,
+      });
       toast.success("Student information updated successfully!");
     } catch (error) {
       console.error("Failed to update student:", error);

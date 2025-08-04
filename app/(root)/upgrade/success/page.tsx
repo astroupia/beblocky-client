@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import Link from "next/link";
 import { usePayment } from "@/hooks/use-payment";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useToast } from "@/hooks/use-toast";
-import { SubscriptionPlan } from "@/lib/api/subscription";
+import { SubscriptionPlan } from "@/types/subscription";
 
 interface PlanInfo {
   id: string;
@@ -48,7 +48,7 @@ const planInfo: Record<string, PlanInfo> = {
   },
 };
 
-export default function UpgradeSuccessPage() {
+function UpgradeSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -246,7 +246,7 @@ export default function UpgradeSuccessPage() {
                   <div className="space-y-2">
                     <h4 className="font-medium">What&apos;s included:</h4>
                     <ul className="space-y-2">
-                      {getPlanFeatures(planId).map((feature, index) => (
+                      {getPlanFeatures(planId || "").map((feature, index) => (
                         <li
                           key={index}
                           className="flex items-center gap-2 text-sm"
@@ -346,5 +346,13 @@ export default function UpgradeSuccessPage() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function UpgradeSuccessPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <UpgradeSuccessContent />
+    </Suspense>
   );
 }

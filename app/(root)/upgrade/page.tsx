@@ -141,11 +141,11 @@ export default function UpgradePage() {
     createArifPayPayment,
     createStripePayment,
   } = usePayment({
-    onSuccess: (response) => {
+    onSuccess: (response: any) => {
       // Redirect to payment URL
-      if (response.paymentUrl) {
+      if (response?.paymentUrl) {
         window.location.href = response.paymentUrl;
-      } else if (response.url) {
+      } else if (response?.url) {
         window.location.href = response.url;
       }
     },

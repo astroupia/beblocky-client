@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -69,15 +69,7 @@ export function CourseDetailsDialog({
   const { data: session } = useSession();
   const userId = session?.user?.id;
 
-  useEffect(() => {
-    if (course && showReviews) {
-      loadReviews();
-    }
-  }, [course, showReviews]);
-
-  if (!course) return null;
-
-  const loadReviews = async () => {
+  const loadReviews = useCallback(async () => {
     if (!course) return;
 
     setIsLoadingReviews(true);
@@ -121,7 +113,15 @@ export function CourseDetailsDialog({
     } finally {
       setIsLoadingReviews(false);
     }
-  };
+  }, [course, userId]);
+
+  useEffect(() => {
+    if (course && showReviews) {
+      loadReviews();
+    }
+  }, [course, showReviews, loadReviews]);
+
+  if (!course) return null;
 
   const handleSubmitReview = async () => {
     if (!course || !userId || userRating === 0) {
