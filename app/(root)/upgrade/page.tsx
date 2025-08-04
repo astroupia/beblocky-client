@@ -28,6 +28,7 @@ import {
   PaymentMethodSelector,
   PaymentProvider,
 } from "@/components/payment/payment-method-selector";
+import { ArifPayPaymentData } from "@/lib/api/payment";
 import { useToast } from "@/hooks/use-toast";
 import { SubscriptionPlan } from "@/types/subscription";
 import { useSession } from "@/lib/auth-client";
@@ -176,8 +177,10 @@ export default function UpgradePage() {
   };
 
   const getPrice = (plan: PricingPlan) => {
-    if (typeof plan.monthlyPrice === "string") return plan.monthlyPrice;
-    return isAnnual ? `$${plan.annualPrice}` : `$${plan.monthlyPrice}`;
+    if (typeof plan.monthlyPrice === "string") return 0; // Handle custom pricing
+    return isAnnual
+      ? (plan.annualPrice as number)
+      : (plan.monthlyPrice as number);
   };
 
   const getPeriod = (plan: PricingPlan) => {
@@ -224,7 +227,7 @@ export default function UpgradePage() {
 
   const handlePaymentMethodSelect = async (
     provider: PaymentProvider,
-    phoneNumber?: string
+    paymentData?: ArifPayPaymentData
   ) => {
     if (!selectedPlan || selectedPlan === "free") return;
 
@@ -247,7 +250,7 @@ export default function UpgradePage() {
             ?.monthlyPrice as number);
 
       if (provider === PaymentProvider.ARIFPAY) {
-        if (!phoneNumber) {
+        if (!paymentData?.phoneNumber) {
           toast({
             title: "Error",
             description: "Phone number is required for local payment",
@@ -259,7 +262,7 @@ export default function UpgradePage() {
           selectedPlan,
           planName,
           amount,
-          phoneNumber,
+          paymentData.phoneNumber,
           isAnnual
         );
       } else {
@@ -562,12 +565,28 @@ export default function UpgradePage() {
               </p>
             </div>
 
-            <PaymentMethodSelector
-              onSelect={handlePaymentMethodSelect}
-              selectedProvider={selectedPaymentProvider || undefined}
-              loading={paymentLoading}
-              userEmail={session?.user?.email}
-            />
+            {session?.user?.id && selectedPlan ? (
+              <PaymentMethodSelector
+                onSelect={handlePaymentMethodSelect}
+                selectedProvider={selectedPaymentProvider || undefined}
+                loading={paymentLoading}
+                userEmail={session?.user?.email}
+                userId={session.user.id}
+                planName={selectedPlan}
+                billingCycle={isAnnual ? "annual" : "monthly"}
+                amount={getPrice(
+                  pricingPlans.find((p) => p.id === selectedPlan)!
+                )}
+              />
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">
+                  {!session?.user?.id
+                    ? "Please log in to continue with payment"
+                    : "Please select a plan to continue"}
+                </p>
+              </div>
+            )}
 
             {session?.user && (
               <div className="mt-4 p-3 bg-muted rounded-lg">

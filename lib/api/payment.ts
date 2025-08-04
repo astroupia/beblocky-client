@@ -37,7 +37,7 @@ export interface PaymentRequest {
   successUrl: string;
   errorUrl: string;
   notifyUrl: string;
-  phone?: number;
+  phone: number; // REQUIRED for ArifPay
   email?: string;
   nonce?: string;
   paymentMethods?: PaymentMethod[];
@@ -64,6 +64,15 @@ export interface PaymentDocument {
   items: PaymentItem[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface ArifPayPaymentData {
+  phoneNumber: string;
+  userId: string;
+  amount: number;
+  planName: string;
+  billingCycle: string;
+  email?: string;
 }
 
 // Stripe Types
@@ -207,6 +216,102 @@ export class PaymentApi {
     });
   }
 }
+
+// Helper functions for payment URLs
+export const createPaymentUrls = (planName: string, billingCycle: string) => {
+  const baseUrl =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "https://code.beblocly.com";
+
+  return {
+    cancelUrl: `${baseUrl}/payment/cancel`,
+    successUrl: `${baseUrl}/payment/success?plan=${planName}&billing=${billingCycle}`,
+    errorUrl: `${baseUrl}/payment/error`,
+    notifyUrl: `${API_BASE_URL}/payment/responseStatus`, // Backend webhook
+  };
+};
+
+// Helper function to create ArifPay payment payload
+export const createArifPayPayload = (
+  userId: string,
+  amount: number,
+  phoneNumber: string,
+  planName: string,
+  billingCycle: string,
+  email?: string
+): PaymentRequest => {
+  // Validate required parameters
+  if (!userId || !amount || !phoneNumber || !planName || !billingCycle) {
+    throw new Error(
+      `Missing required parameters: userId=${!!userId}, amount=${!!amount}, phoneNumber=${!!phoneNumber}, planName=${!!planName}, billingCycle=${!!billingCycle}`
+    );
+  }
+
+  const urls = createPaymentUrls(planName, billingCycle);
+
+  // Safely format plan name with fallback
+  const formattedPlanName =
+    planName && planName.length > 0
+      ? `${planName.charAt(0).toUpperCase()}${planName.slice(1)}`
+      : "Premium";
+
+  return {
+    userId,
+    amount,
+    phone: parseInt(phoneNumber), // Convert string to number
+    email,
+    ...urls,
+    paymentMethods: [
+      PaymentMethod.TELEBIRR,
+      PaymentMethod.AWASH,
+      PaymentMethod.AWASH_WALLET,
+      PaymentMethod.CBE,
+      PaymentMethod.AMOLE,
+      PaymentMethod.BOA,
+      PaymentMethod.KACHA,
+      PaymentMethod.HELLOCASH,
+    ],
+    expireDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+    items: [
+      {
+        name: `${formattedPlanName} Plan`,
+        quantity: 1,
+        price: amount,
+        description: `${planName} subscription - ${billingCycle} billing`,
+      },
+    ],
+  };
+};
+
+// Helper function to handle payment flow
+export const initiatePaymentFlow = async (
+  provider: "arifpay" | "stripe",
+  paymentData: any
+): Promise<string> => {
+  try {
+    if (provider === "arifpay") {
+      console.log("🔄 [Payment Flow] Initiating ArifPay payment...");
+      const response = await paymentApi.createPayment(paymentData);
+      console.log("✅ [Payment Flow] ArifPay payment created:", response);
+
+      // Return the payment URL for redirect
+      return response.paymentUrl;
+    } else if (provider === "stripe") {
+      console.log("🔄 [Payment Flow] Initiating Stripe payment...");
+      const response = await paymentApi.createStripeCheckout(paymentData);
+      console.log("✅ [Payment Flow] Stripe checkout created:", response);
+
+      // Return the checkout URL for redirect
+      return response.url;
+    }
+
+    throw new Error(`Unsupported payment provider: ${provider}`);
+  } catch (error) {
+    console.error("❌ [Payment Flow] Payment initiation failed:", error);
+    throw error;
+  }
+};
 
 // Instance methods for backward compatibility
 export const paymentApi = {
