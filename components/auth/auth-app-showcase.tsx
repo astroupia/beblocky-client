@@ -131,7 +131,7 @@ export function AuthAppShowcase({ mode }: AppShowcaseProps) {
               </motion.div>
               <div>
                 <h2 className="text-white text-2xl font-bold drop-shadow-lg">
-                  EduPlatform Mobile
+                  Beblocky Mobile
                 </h2>
                 <p className="text-white/90 text-sm drop-shadow">
                   Learn anywhere, anytime
