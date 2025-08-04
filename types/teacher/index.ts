@@ -1,5 +1,5 @@
-import { Types } from 'mongoose';
-import { ICreateUserDto, IUpdateUserDto } from '../user';
+// import { Types } from 'mongoose';
+import { ICreateUserDto, IUpdateUserDto } from "../user";
 
 export interface IQualification {
   degree: string;
@@ -17,10 +17,10 @@ export interface ITeacher {
   qualifications: IQualification[];
   availability: Map<string, ITimeSlot[]>;
   rating: number[];
-  courses: Types.ObjectId[];
-  organizationId: Types.ObjectId;
+  courses: string[];
+  organizationId: string;
   languages: string[];
-  subscription?: Types.ObjectId;
+  subscription?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,10 +29,10 @@ export interface ICreateTeacherDto extends ICreateUserDto {
   qualifications?: IQualification[];
   availability?: Map<string, ITimeSlot[]>;
   rating?: number[];
-  courses?: Types.ObjectId[];
-  organizationId: Types.ObjectId;
+  courses?: string[];
+  organizationId: string;
   languages?: string[];
-  subscription?: Types.ObjectId;
+  subscription?: string;
 }
 
 export type IUpdateTeacherDto = Partial<ICreateTeacherDto> &

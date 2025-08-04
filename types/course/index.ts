@@ -1,5 +1,5 @@
-import { Types } from "mongoose";
-import { ICreateLessonDto, ICreateSlideDto } from "..";
+// import { Types } from "mongoose";
+// import { ICreateLessonDto, ICreateSlideDto } from "..";
 
 export enum CourseSubscriptionType {
   FREE = "free",
@@ -18,10 +18,10 @@ export interface ICourse {
   courseTitle: string;
   courseDescription: string;
   courseLanguage: string;
-  slides: Types.ObjectId[];
-  lessons: Types.ObjectId[];
-  students: Types.ObjectId[];
-  organization: Types.ObjectId[];
+  slides: string[];
+  lessons: string[];
+  students: string[];
+  organization: string[];
   subType: CourseSubscriptionType;
   status: CourseStatus;
   rating: number;
@@ -34,9 +34,9 @@ export interface ICreateCourseDto {
   courseTitle: string;
   courseDescription?: string;
   courseLanguage: string;
-  lessonIds?: Types.ObjectId[];
-  slideIds?: Types.ObjectId[];
-  organization?: Types.ObjectId[];
+  lessonIds?: string[];
+  slideIds?: string[];
+  organization?: string[];
   subType?: CourseSubscriptionType;
   status?: CourseStatus;
   rating?: number;
@@ -49,8 +49,8 @@ export interface ICreateCourseWithContentDto {
   courseTitle: string;
   courseDescription: string;
   courseLanguage: string;
-  lessons?: ICreateLessonDto[];
-  slides?: ICreateSlideDto[];
+  lessons?: any[];
+  slides?: any[];
   subType?: CourseSubscriptionType;
   status?: CourseStatus;
   rating?: number;
@@ -67,7 +67,7 @@ export enum RatingValue {
 }
 
 export interface ICourseRating {
-  courseId: Types.ObjectId;
+  courseId: string;
   userId: string; // String ID from better-auth
   rating: RatingValue;
   review?: string;

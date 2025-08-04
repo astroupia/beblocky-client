@@ -1,11 +1,11 @@
-import { Types } from 'mongoose';
-import { ICreateUserDto, IUpdateUserDto } from '../user';
+// import { Types } from 'mongoose';
+import { ICreateUserDto, IUpdateUserDto } from "../user";
 
 export enum RelationshipType {
-  MOTHER = 'mother',
-  FATHER = 'father',
-  GUARDIAN = 'guardian',
-  OTHER = 'other',
+  MOTHER = "mother",
+  FATHER = "father",
+  GUARDIAN = "guardian",
+  OTHER = "other",
 }
 
 export interface IAddress {
@@ -15,19 +15,19 @@ export interface IAddress {
 }
 
 export interface IParent {
-  userId: Types.ObjectId;
-  children: Types.ObjectId[];
+  userId: string;
+  children: string[];
   relationship: RelationshipType;
   phoneNumber: string;
   address: IAddress;
-  subscription: Types.ObjectId;
-  paymentHistory: Types.ObjectId[];
+  subscription: string;
+  paymentHistory: string[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface ICreateParentDto extends ICreateUserDto {
-  children?: Types.ObjectId[];
+  children?: string[];
   relationship: RelationshipType;
   phoneNumber: string;
   address: IAddress;
@@ -37,9 +37,9 @@ export type IUpdateParentDto = Partial<ICreateParentDto> &
   Partial<IUpdateUserDto>;
 
 export interface IAddChildDto {
-  childId: Types.ObjectId;
+  childId: string;
 }
 
 export interface IRemoveChildDto {
-  childId: Types.ObjectId;
+  childId: string;
 }

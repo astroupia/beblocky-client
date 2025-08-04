@@ -1,11 +1,11 @@
-import { Types } from 'mongoose';
-import { ThemeColorsDto } from '../../shared/dtos/theme-colors.dto';
+// import { Types } from 'mongoose';
+// import { ThemeColorsDto } from '../../shared/dtos/theme-colors.dto';
 
 export interface ISlide {
   title: string;
   content?: string;
-  course: Types.ObjectId;
-  lesson?: Types.ObjectId;
+  course: string;
+  lesson?: string;
   order: number;
   titleFont: string;
   startingCode?: string;
@@ -25,8 +25,8 @@ export interface ICreateSlideDto {
   title: string;
   content?: string;
   order: number;
-  courseId: Types.ObjectId;
-  lessonId: Types.ObjectId;
+  courseId: string;
+  lessonId: string;
   titleFont?: string;
   contentFont?: string;
   startingCode?: string;
@@ -34,20 +34,20 @@ export interface ICreateSlideDto {
   imageUrls?: string[];
   backgroundColor?: string;
   textColor?: string;
-  themeColors?: ThemeColorsDto;
+  themeColors?: any;
   imageUrl?: string;
   videoUrl?: string;
 }
 
 export type IUpdateSlideDto = Partial<
-  Omit<ICreateSlideDto, 'courseId' | 'lessonId'>
+  Omit<ICreateSlideDto, "courseId" | "lessonId">
 >;
 
 export interface IReorderSlidesDto {
-  slideIds: Types.ObjectId[];
+  slideIds: string[];
 }
 
 export interface IAddMediaDto {
   mediaUrl: string;
-  type: 'image' | 'video';
+  type: "image" | "video";
 }

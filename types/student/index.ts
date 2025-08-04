@@ -1,10 +1,10 @@
-import { Types } from 'mongoose';
-import { ICreateUserDto, IUpdateUserDto } from '../user';
+// import { Types } from 'mongoose';
+import { ICreateUserDto, IUpdateUserDto } from "../user";
 
 export enum Gender {
-  MALE = 'male',
-  FEMALE = 'female',
-  OTHER = 'other',
+  MALE = "male",
+  FEMALE = "female",
+  OTHER = "other",
 }
 
 export interface IEmergencyContact {
@@ -17,9 +17,9 @@ export interface IStudent {
   dateOfBirth?: Date;
   grade?: number;
   gender?: Gender;
-  schoolId?: Types.ObjectId;
-  parentId?: Types.ObjectId;
-  enrolledCourses: Types.ObjectId[];
+  schoolId?: string;
+  parentId?: string;
+  enrolledCourses: string[];
   coins: number;
   codingStreak: number; // Current coding streak
   lastCodingActivity: Date; // Last coding activity for streak
@@ -36,9 +36,9 @@ export interface ICreateStudentDto extends ICreateUserDto {
   dateOfBirth?: Date;
   grade?: number;
   gender?: Gender;
-  schoolId?: Types.ObjectId;
-  parentId?: Types.ObjectId;
-  enrolledCourses?: Types.ObjectId[];
+  schoolId?: string;
+  parentId?: string;
+  enrolledCourses?: string[];
   coins?: number;
   codingStreak?: number;
   lastCodingActivity?: Date;
@@ -54,7 +54,7 @@ export type IUpdateStudentDto = Partial<ICreateStudentDto> &
   Partial<IUpdateUserDto>;
 
 export interface IEnrollCourseDto {
-  courseId: Types.ObjectId;
+  courseId: string;
 }
 
 export interface IAddCoinsDto {
@@ -89,7 +89,7 @@ export interface IStudentStats {
 }
 
 // Export actual DTOs and entities from the student module
-export * from '../../student/entities/student.entity';
-export * from '../../student/dtos/create-student.dto';
-export * from '../../student/dtos/update-student.dto';
-export * from '../../student/dtos/student-response.dto';
+// export * from '../../student/entities/student.entity';
+// export * from '../../student/dtos/create-student.dto';
+// export * from '../../student/dtos/update-student.dto';
+// export * from '../../student/dtos/student-response.dto';

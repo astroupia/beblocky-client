@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+// import { Types } from 'mongoose';
 
 // Enums
 export enum ClassUserType {
@@ -21,7 +21,7 @@ export interface IClassMetadata {
 }
 
 export interface IClassCreator {
-  userId: Types.ObjectId;
+  userId: string;
   userType: ClassUserType;
 }
 
@@ -30,9 +30,9 @@ export interface IClass {
   className: string;
   description?: string;
   createdBy: IClassCreator;
-  organizationId?: Types.ObjectId;
-  courses: Types.ObjectId[];
-  students: Types.ObjectId[];
+  organizationId?: string;
+  courses: string[];
+  students: string[];
   maxStudents?: number;
   isActive: boolean;
   startDate?: Date;
@@ -115,8 +115,8 @@ export interface IClassStats {
 // Organization Application interfaces
 export interface IOrganizationApplication {
   id: string;
-  organizationId: Types.ObjectId;
-  classId: Types.ObjectId;
+  organizationId: string;
+  classId: string;
   status: string;
   message?: string;
   reviewMessage?: string;
@@ -127,12 +127,12 @@ export interface IOrganizationApplication {
 }
 
 // Export actual DTOs and entities from the class module
-export * from '../../class/entities/class.entity';
-export * from '../../class/entities/organization-application.entity';
-export * from '../../class/dtos/create-class.dto';
-export * from '../../class/dtos/update-class.dto';
-export * from '../../class/dtos/update-class-settings.dto';
-export * from '../../class/dtos/add-student.dto';
-export * from '../../class/dtos/add-course.dto';
-export * from '../../class/dtos/create-application.dto';
-export * from '../../class/dtos/review-application.dto';
+// export * from '../../class/entities/class.entity';
+// export * from '../../class/entities/organization-application.entity';
+// export * from '../../class/dtos/create-class.dto';
+// export * from '../../class/dtos/update-class.dto';
+// export * from '../../class/dtos/update-class-settings.dto';
+// export * from '../../class/dtos/add-student.dto';
+// export * from '../../class/dtos/add-course.dto';
+// export * from '../../class/dtos/create-application.dto';
+// export * from '../../class/dtos/review-application.dto';

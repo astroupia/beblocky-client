@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+// import { Types } from "mongoose";
 
 export enum SubscriptionPlan {
   FREE = "Free",
@@ -22,7 +22,7 @@ export enum BillingCycle {
 }
 
 export interface ISubscription {
-  userId: Types.ObjectId;
+  userId: string;
   planName: SubscriptionPlan;
   status: SubscriptionStatus;
   startDate: Date;
@@ -32,7 +32,7 @@ export interface ISubscription {
   currency: string;
   billingCycle: BillingCycle;
   features: string[];
-  paymentHistory: Types.ObjectId[];
+  paymentHistory: string[];
   lastPaymentDate?: Date;
   nextBillingDate?: Date;
   trialEndsAt?: Date;
@@ -42,7 +42,7 @@ export interface ISubscription {
 }
 
 export interface ICreateSubscriptionDto {
-  userId: Types.ObjectId;
+  userId: string;
   planName: SubscriptionPlan;
   status?: SubscriptionStatus;
   startDate: Date;

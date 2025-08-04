@@ -172,6 +172,27 @@ export class ChildrenApi {
       body: JSON.stringify(childData),
     });
   }
+
+  // Add course to child
+  static async addCourseToChild(
+    childId: string,
+    courseId: string
+  ): Promise<ApiResponse<IStudent>> {
+    return this.request<IStudent>(`/children/${childId}/courses`, {
+      method: "POST",
+      body: JSON.stringify({ courseId }),
+    });
+  }
+
+  // Remove course from child
+  static async removeCourseFromChild(
+    childId: string,
+    courseId: string
+  ): Promise<ApiResponse<IStudent>> {
+    return this.request<IStudent>(`/children/${childId}/courses/${courseId}`, {
+      method: "DELETE",
+    });
+  }
 }
 
 // Instance methods for backward compatibility
@@ -225,6 +246,19 @@ export const childrenApi = {
     childData: IAddChildDto
   ): Promise<IStudent> {
     const response = await ChildrenApi.addChildToParent(parentId, childData);
+    return response.data;
+  },
+
+  async addCourseToChild(childId: string, courseId: string): Promise<IStudent> {
+    const response = await ChildrenApi.addCourseToChild(childId, courseId);
+    return response.data;
+  },
+
+  async removeCourseFromChild(
+    childId: string,
+    courseId: string
+  ): Promise<IStudent> {
+    const response = await ChildrenApi.removeCourseFromChild(childId, courseId);
     return response.data;
   },
 };

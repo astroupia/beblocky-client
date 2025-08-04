@@ -1,11 +1,11 @@
-import { Types } from 'mongoose';
-import { ICreateUserDto, IUpdateUserDto } from '../user';
+// import { Types } from 'mongoose';
+import { ICreateUserDto, IUpdateUserDto } from "../user";
 
 export enum OrganizationType {
-  SCHOOL = 'school',
-  UNIVERSITY = 'university',
-  TRAINING_CENTER = 'training_center',
-  OTHER = 'other',
+  SCHOOL = "school",
+  UNIVERSITY = "university",
+  TRAINING_CENTER = "training_center",
+  OTHER = "other",
 }
 
 export interface IAddress {
@@ -44,11 +44,11 @@ export interface IOrganization {
   type: OrganizationType;
   address: IAddress;
   contactInfo: IContactInfo;
-  teachers: Types.ObjectId[];
-  students: Types.ObjectId[];
-  courses: Types.ObjectId[];
-  subscription: Types.ObjectId;
-  paymentHistory: Types.ObjectId[];
+  teachers: string[];
+  students: string[];
+  courses: string[];
+  subscription: string;
+  paymentHistory: string[];
   features: IFeatures;
   settings: ISettings;
   isVerified: boolean;

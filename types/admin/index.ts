@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+// import { Types } from 'mongoose';
 import { ICreateUserDto, IUpdateUserDto } from '../user';
 
 export enum AdminAccessLevel {
@@ -7,19 +7,19 @@ export enum AdminAccessLevel {
 }
 
 export interface IAdmin {
-  userId: Types.ObjectId;
+  userId: string;
   accessLevel: AdminAccessLevel;
-  managedOrganizations: Types.ObjectId[];
+  managedOrganizations: string[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface ICreateAdminDto extends ICreateUserDto {
   accessLevel?: AdminAccessLevel;
-  managedOrganizations?: Types.ObjectId[];
+  managedOrganizations?: string[];
 }
 
 export type IUpdateAdminDto = Partial<IUpdateUserDto> & {
   accessLevel?: AdminAccessLevel;
-  managedOrganizations?: Types.ObjectId[];
+  managedOrganizations?: string[];
 };
