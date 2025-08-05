@@ -222,7 +222,7 @@ export const createPaymentUrls = (planName: string, billingCycle: string) => {
   const baseUrl =
     typeof window !== "undefined"
       ? window.location.origin
-      : "https://code.beblocly.com";
+      : "https://code.beblocky.com";
 
   return {
     cancelUrl: `${baseUrl}/payment/cancel`,

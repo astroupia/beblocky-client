@@ -15,6 +15,7 @@ export const auth = betterAuth({
     "http://localhost:3001",
     "https://beblocky.com",
     "https://www.beblocky.com",
+    "https://code.beblocky.com",
   ],
   cookies: {
     sessionToken: {

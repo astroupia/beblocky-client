@@ -91,10 +91,10 @@ interface ArifPayPaymentData {
  * {
  *   userId: string;
  *   amount: number;
- *   cancelUrl: "https://code.beblocly.com/cancel";
- *   successUrl: "https://code.beblocly.com/success?plan=${planName}&billing=${billingCycle}";
- *   errorUrl: "https://code.beblocly.com/error";
- *   notifyUrl: "https://code.beblocly.com/webhook";
+ *   cancelUrl: "https://code.beblocky.com/cancel";
+ *   successUrl: "https://code.beblocky.com/success?plan=${planName}&billing=${billingCycle}";
+ *   errorUrl: "https://code.beblocky.com/error";
+ *   notifyUrl: "https://code.beblocky.com/webhook";
  *   phone: number; // REQUIRED - Ethiopian format: 251912345678
  *   email?: string;
  *   paymentMethods: ["TELEBIRR", "AWASH", "AWASH_WALLET", "CBE", "AMOLE", "BOA", "KACHA", "HELLOCASH"];
@@ -117,10 +117,10 @@ interface ArifPayPaymentData {
  * const createArifPayPayload = (paymentData: ArifPayPaymentData) => ({
  *   userId: paymentData.userId,
  *   amount: paymentData.amount,
- *   cancelUrl: "https://code.beblocly.com/cancel",
- *   successUrl: `https://code.beblocly.com/success?plan=${paymentData.planName}&billing=${paymentData.billingCycle}`,
- *   errorUrl: "https://code.beblocly.com/error",
- *   notifyUrl: "https://code.beblocly.com/webhook",
+ *   cancelUrl: "https://code.beblocky.com/cancel",
+ *   successUrl: `https://code.beblocky.com/success?plan=${paymentData.planName}&billing=${paymentData.billingCycle}`,
+ *   errorUrl: "https://code.beblocky.com/error",
+ *   notifyUrl: "https://code.beblocky.com/webhook",
  *   phone: parseInt(paymentData.phoneNumber), // Convert to number
  *   email: paymentData.email,
  *   paymentMethods: ["TELEBIRR", "AWASH", "AWASH_WALLET", "CBE", "AMOLE", "BOA", "KACHA", "HELLOCASH"],
