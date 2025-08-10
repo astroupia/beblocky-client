@@ -17,13 +17,63 @@ import { StatsCard } from "@/components/shared/stats-card";
 import { GoalsPlaceholder } from "@/components/shared/goals-placeholder";
 import { LanguageLogo } from "@/components/shared/language-logos";
 import { CourseCard } from "@/components/shared/course-card";
-import type { IStudentDashboardProps } from "@/types/dashboard";
+import type { IStudentDashboardProps, ICourse } from "@/types/dashboard";
+import { useSubscription } from "@/hooks/use-subscription";
+import { filterCoursesBySubscription } from "@/lib/utils/subscription-hierarchy";
+import { CourseStatus } from "@/types/course";
+import { progressApi } from "@/lib/api/progress";
+import { studentApi } from "@/lib/api/student";
+import { useSession } from "@/lib/auth-client";
+import { useState, useEffect, useMemo } from "react";
 
 export function StudentDashboard({
   courses,
   stats,
   selectedTab = "overview",
 }: IStudentDashboardProps) {
+  const { subscription } = useSubscription();
+  const { data: session } = useSession();
+  const [enrolledCourses, setEnrolledCourses] = useState<ICourse[]>([]);
+  const [studentId, setStudentId] = useState<string | null>(null);
+
+  // Filter courses based on user's subscription plan and active status
+  // This gives us ALL courses the user can access with their current subscription
+  const accessibleCourses = useMemo(() => {
+    return filterCoursesBySubscription(
+      courses.filter((course) => course.status === CourseStatus.ACTIVE),
+      subscription?.planName || null
+    );
+  }, [courses, subscription?.planName]);
+
+  // Fetch enrolled courses with progress
+  useEffect(() => {
+    const fetchEnrolledCourses = async () => {
+      if (!session?.user?.id) return;
+
+      try {
+        // Get student record
+        const student = await studentApi.getStudentByUserId(session.user.id);
+        setStudentId(student._id);
+
+        // Get student's progress for all courses
+        const progressData = await progressApi.getStudentProgress(student._id);
+
+        // Filter courses that have progress (enrolled)
+        // This gives us only courses the student has actually started
+        const enrolled = accessibleCourses.filter((course) =>
+          progressData.some((progress) => progress.courseId === course._id)
+        );
+
+        setEnrolledCourses(enrolled);
+      } catch (error) {
+        console.warn("Failed to fetch enrolled courses:", error);
+        setEnrolledCourses([]);
+      }
+    };
+
+    fetchEnrolledCourses();
+  }, [session?.user?.id, accessibleCourses]);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -137,7 +187,7 @@ export function StudentDashboard({
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {courses.slice(0, 3).map((course, index) => (
+                  {enrolledCourses.slice(0, 3).map((course, index) => (
                     <motion.div
                       key={course._id}
                       className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
@@ -182,8 +232,32 @@ export function StudentDashboard({
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
+            {/* My Courses Header */}
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5" />
+                  My Courses
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  All courses available with your{" "}
+                  {subscription?.planName || "Free"} subscription
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between text-sm">
+                  <span>Total Available Courses</span>
+                  <Badge variant="secondary">{accessibleCourses.length}</Badge>
+                </div>
+                <div className="flex items-center justify-between text-sm mt-2">
+                  <span>Enrolled Courses</span>
+                  <Badge variant="default">{enrolledCourses.length}</Badge>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((course, index) => (
+              {accessibleCourses.map((course, index) => (
                 <CourseCard
                   key={course._id}
                   course={course}

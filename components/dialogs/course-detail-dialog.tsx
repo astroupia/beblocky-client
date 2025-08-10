@@ -32,9 +32,13 @@ import type {
   ICourse,
   ICourseRatingResponse,
   ICourseRatingStats,
-} from "@/types/dashboard";
+} from "@/types/course";
+import { CourseSubscriptionType } from "@/types/course";
+import { useSubscription } from "@/hooks/use-subscription";
+import { canAccessCourse } from "@/lib/utils/subscription-hierarchy";
 import { formatDate } from "@/lib/utils";
 import { courseApi } from "@/lib/api/course";
+import { lessonApi } from "@/lib/api/lesson";
 import { useSession } from "@/lib/auth-client";
 
 interface CourseDetailsDialogProps {
@@ -64,10 +68,50 @@ export function CourseDetailsDialog({
   const [userReview, setUserReview] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [totalHours, setTotalHours] = useState(2);
+  const [studentsCount, setStudentsCount] = useState(0);
 
   // Get user ID from session
   const { data: session } = useSession();
   const userId = session?.user?.id;
+  const { subscription } = useSubscription();
+
+  // Fetch lesson data for duration calculation
+  useEffect(() => {
+    const fetchLessonData = async () => {
+      if (!course) return;
+
+      try {
+        const lessons = await lessonApi.getLessonsByCourse(course._id);
+        const totalMinutes = lessons.reduce(
+          (sum, lesson) => sum + (Number(lesson.duration) || 0),
+          0
+        );
+        const hours =
+          totalMinutes > 0 ? Math.max(1, Math.round(totalMinutes / 60)) : 2;
+        setTotalHours(hours);
+      } catch (error) {
+        console.warn(
+          "Failed to fetch lesson data for course:",
+          course._id,
+          error
+        );
+        setTotalHours(2); // Default fallback
+      }
+    };
+
+    fetchLessonData();
+  }, [course]);
+
+  // Calculate students count from course data
+  useEffect(() => {
+    if (!course) return;
+
+    const count = Array.isArray((course as any).students)
+      ? ((course as any).students as string[]).length
+      : 0;
+    setStudentsCount(count);
+  }, [course]);
 
   const loadReviews = useCallback(async () => {
     if (!course) return;
@@ -186,6 +230,21 @@ export function CourseDetailsDialog({
     onClose();
   };
 
+  // Check if user has the same course (for parent users)
+  const userHasSameCourse =
+    course?.progress !== undefined && course?.progress > 0;
+
+  // Determine if Add to Plan should be visible per hierarchy
+  const shouldShowAddToPlan = (() => {
+    if (!course) return false;
+    // 1) Free plan courses should NOT show add to plan
+    if (course.subType === CourseSubscriptionType.FREE) return false;
+    // 2) If user plan already covers this course level, hide
+    const userPlan = subscription?.planName || null;
+    const covered = canAccessCourse(userPlan as any, course.subType);
+    return !covered;
+  })();
+
   const features = [
     "Interactive coding exercises",
     "Step-by-step tutorials",
@@ -248,7 +307,7 @@ export function CourseDetailsDialog({
               <Card className="p-3">
                 <CardContent className="p-0 text-center">
                   <Clock className="h-5 w-5 text-blue-500 mx-auto mb-1" />
-                  <div className="text-lg font-bold">12h</div>
+                  <div className="text-lg font-bold">{totalHours}h</div>
                   <div className="text-xs text-muted-foreground">Duration</div>
                 </CardContent>
               </Card>
@@ -256,7 +315,7 @@ export function CourseDetailsDialog({
               <Card className="p-3">
                 <CardContent className="p-0 text-center">
                   <Users className="h-5 w-5 text-green-500 mx-auto mb-1" />
-                  <div className="text-lg font-bold">1.2k</div>
+                  <div className="text-lg font-bold">{studentsCount}</div>
                   <div className="text-xs text-muted-foreground">Students</div>
                 </CardContent>
               </Card>
@@ -552,7 +611,7 @@ export function CourseDetailsDialog({
                   </>
                 )}
               </Button>
-            ) : (
+            ) : shouldShowAddToPlan && !userHasSameCourse ? (
               <Button
                 onClick={handleAction}
                 disabled={isLoading}
@@ -566,6 +625,11 @@ export function CourseDetailsDialog({
                     Add to Plan
                   </>
                 )}
+              </Button>
+            ) : (
+              <Button variant="outline" disabled className="flex-1 gap-2">
+                <CheckCircle className="h-4 w-4" />
+                Already in Plan
               </Button>
             )}
           </div>

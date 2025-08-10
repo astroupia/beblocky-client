@@ -87,10 +87,33 @@ export function AppSidebar({ items }: Props) {
     <div className="flex h-screen">
       <div
         className={cn(
-          "flex flex-col bg-card border-r border-border transition-all duration-300",
+          "relative flex flex-col bg-card border-r border-border transition-all duration-300",
           isCollapsed ? "w-16" : "w-64"
         )}
       >
+        {/* Collapse Button - Positioned on the left side of sidebar */}
+        <motion.button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className={cn(
+            "absolute top-4 z-20",
+            "w-8 h-8 rounded-full border-2 border-border bg-card shadow-lg",
+            "hover:shadow-xl hover:scale-110 transition-all duration-300",
+            "flex items-center justify-center",
+            "hover:border-primary/50 hover:bg-primary/5",
+            // Dynamic positioning based on sidebar state
+            isCollapsed ? "left-12" : "left-60" // 60 = 64 - 4 (sidebar width - button offset)
+          )}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <motion.div
+            animate={{ rotate: isCollapsed ? 0 : 180 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+          </motion.div>
+        </motion.button>
+
         {/* Logo Section */}
         <motion.div
           className="relative p-6"
@@ -210,18 +233,6 @@ export function AppSidebar({ items }: Props) {
           <UserButton isCollapsed={isCollapsed} />
         </div>
       </div>
-
-      {/* Collapse Button - Outside Sidebar */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="p-2 rounded-md hover:bg-accent transition-colors border border-border bg-card"
-      >
-        {isCollapsed ? (
-          <ChevronRight className="h-4 w-4" />
-        ) : (
-          <ChevronLeft className="h-4 w-4" />
-        )}
-      </button>
     </div>
   );
 }

@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Search, Filter, X } from "lucide-react";
-import type { ICourse } from "@/types/dashboard";
-import { CourseSubscriptionType } from "@/types/dashboard";
+import type { ICourse } from "@/types/course";
+import { CourseSubscriptionType } from "@/types/course";
 
 interface CourseFiltersProps {
   courses: ICourse[];

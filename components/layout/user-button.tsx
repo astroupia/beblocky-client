@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { userApi } from "@/lib/api/user";
 import type { IUser } from "@/lib/api/user";
 import { ProfileDialog } from "@/components/profile/profile-dialog";
+import { useSubscription } from "@/hooks/use-subscription";
 
 interface UserButtonProps {
   isCollapsed?: boolean;
@@ -30,6 +31,7 @@ export function UserButton({ isCollapsed = false }: UserButtonProps) {
   const [userData, setUserData] = useState<IUser | null>(null);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const { data: session, isPending } = useSession();
+  const { subscription } = useSubscription();
   const router = useRouter();
 
   // Fetch user data to get the actual role
@@ -88,25 +90,39 @@ export function UserButton({ isCollapsed = false }: UserButtonProps) {
   // Get role from fetched user data instead of session
   const userRole = userData?.role || "user";
 
-  // Get subscription info from user role
-  const getSubscriptionInfo = (userRole?: string) => {
-    switch (userRole) {
-      case "admin":
+  // Get subscription info from actual subscription data
+  const getSubscriptionInfo = () => {
+    if (!subscription || subscription.status !== "active") {
+      return { name: "Free", variant: "outline" as const, icon: null };
+    }
+
+    switch (subscription.planName) {
+      case "Pro-Bundle":
         return {
           name: "Pro Bundle",
           variant: "default" as const,
           icon: <Crown className="h-3 w-3" />,
         };
-      case "teacher":
+      case "Builder":
         return { name: "Builder", variant: "secondary" as const, icon: null };
-      case "parent":
+      case "Starter":
         return { name: "Starter", variant: "outline" as const, icon: null };
+      case "Organization":
+        return {
+          name: "Organization",
+          variant: "default" as const,
+          icon: <Crown className="h-3 w-3" />,
+        };
       default:
-        return { name: "Free", variant: "outline" as const, icon: null };
+        return {
+          name: subscription.planName,
+          variant: "outline" as const,
+          icon: null,
+        };
     }
   };
 
-  const subscriptionInfo = getSubscriptionInfo(userRole);
+  const subscriptionInfo = getSubscriptionInfo();
 
   return (
     <>
@@ -128,10 +144,7 @@ export function UserButton({ isCollapsed = false }: UserButtonProps) {
             >
               <div className="relative">
                 <Avatar className="h-12 w-12 ring-2 ring-primary/20 hover:ring-primary/30 transition-all duration-200 hover:scale-105">
-                  <AvatarImage
-                    src={user.image || "/placeholder.svg"}
-                    alt={user.name}
-                  />
+                  <AvatarImage src={user.image || undefined} alt={user.name} />
                   <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white font-semibold shadow-lg text-lg">
                     {user.name
                       .split(" ")
@@ -140,10 +153,10 @@ export function UserButton({ isCollapsed = false }: UserButtonProps) {
                       .toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="absolute -bottom-1 -right-1">
+                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 z-10">
                   <Badge
                     variant={subscriptionInfo.variant}
-                    className="text-xs px-1.5 py-0.5 flex items-center gap-1 shadow-md"
+                    className="text-xs px-1.5 py-0.5 flex items-center gap-1"
                   >
                     {subscriptionInfo.icon}
                     {subscriptionInfo.name === "Pro Bundle"
