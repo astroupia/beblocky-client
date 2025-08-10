@@ -82,15 +82,15 @@ export default function SignInPage() {
         throw new Error(result.error.message);
       }
 
-      console.log("Sign-in successful, redirecting to /courses");
+      console.log("Sign-in successful, redirecting to /");
 
       // Use window.location.href for more reliable redirects in deployed environments
-      window.location.href = "/courses";
+      window.location.href = "/";
 
       // Fallback: if window.location.href doesn't work, try router.push
       setTimeout(() => {
-        if (window.location.pathname !== "/courses") {
-          router.push("/courses");
+        if (window.location.pathname !== "/") {
+          router.push("/");
         }
       }, 1000);
     } catch (err) {

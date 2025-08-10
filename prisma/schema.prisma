@@ -14,7 +14,7 @@ model User {
   createdAt     DateTime  @default(now())
   emailVerified Boolean
   image         String?
-  role          String?   @default("teacher")
+  role          String   @default("student")
   updatedAt     DateTime
   sessions      Session[]
   accounts      Account[]

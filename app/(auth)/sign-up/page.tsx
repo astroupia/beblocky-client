@@ -206,11 +206,25 @@ export default function SignUpPage() {
       localStorage.setItem("signup_user_role", userType);
       console.log("🎯 [SignUp] Stored user role in localStorage:", userType);
 
-      const result = await signUp.email({
-        email: formData.email,
-        password: formData.password,
-        name: `${formData.firstName} ${formData.lastName}`,
+      // Use custom signup endpoint to handle role assignment
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          name: `${formData.firstName} ${formData.lastName}`,
+          role: userType,
+        }),
       });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to create account");
+      }
 
       console.log("Sign-up result:", result);
 
@@ -219,31 +233,20 @@ export default function SignUpPage() {
       }
 
       // If signup was successful and we have a user ID, create user profile
-      // The user data is nested in result.data.user
-      if (
-        "data" in result &&
-        result.data?.user &&
-        typeof result.data.user === "object" &&
-        "id" in result.data.user
-      ) {
+      if (result.success && result.user && result.user.id) {
         console.log(
           "🎯 [SignUp] User created successfully, creating profile for role:",
           userType === "parent" ? "PARENT" : "STUDENT"
         );
-        console.log("🎯 [SignUp] User object:", result.data.user);
+        console.log("🎯 [SignUp] User object:", result.user);
 
         // Add a small delay to ensure user data is saved in database
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        await createUserProfiles(result.data.user.id as string);
+        await createUserProfiles(result.user.id);
       } else {
-        console.log(
-          "No user ID found in result, skipping teacher profile creation"
-        );
-        console.log("Result structure:", Object.keys(result || {}));
-        if ("data" in result && result.data) {
-          console.log("Data structure:", Object.keys(result.data));
-        }
+        console.log("No user ID found in result, skipping profile creation");
+        console.log("Result structure:", result);
       }
 
       toast.success("Account created successfully! Welcome to the platform.");
