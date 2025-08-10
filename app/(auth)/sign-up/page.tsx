@@ -23,6 +23,8 @@ import { useRouter } from "next/navigation";
 import { parentApi } from "@/lib/api/parent";
 import { studentApi } from "@/lib/api/student";
 import { toast } from "sonner";
+import { TermsConditionsDialog } from "@/components/dialogs/terms-and-condition";
+import { userApi } from "@/lib/api/user";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -31,6 +33,7 @@ export default function SignUpPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreatingProfile, setIsCreatingProfile] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
   const [error, setError] = useState("");
   const [userType, setUserType] = useState<"parent" | "student" | null>(null);
   const [formData, setFormData] = useState({
@@ -40,14 +43,25 @@ export default function SignUpPage() {
     password: "",
     confirmPassword: "",
   });
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (but NOT during sign-up finalization)
   useEffect(() => {
-    if (session.data?.user) {
-      console.log("User already authenticated, redirecting to /courses");
-      window.location.href = "/courses";
+    try {
+      const signupRole =
+        typeof window !== "undefined"
+          ? localStorage.getItem("signup_user_role")
+          : null;
+      if (session.data?.user && !isFinalizing && !signupRole) {
+        console.log("User already authenticated, redirecting to /courses");
+        window.location.href = "/courses";
+      }
+    } catch (_) {
+      if (session.data?.user && !isFinalizing) {
+        window.location.href = "/courses";
+      }
     }
-  }, [session.data]);
+  }, [session.data, isFinalizing]);
 
   // Cleanup stored role on component unmount
   useEffect(() => {
@@ -72,8 +86,18 @@ export default function SignUpPage() {
     );
   }
 
-  // Don't render the form if already authenticated
-  if (session.data?.user) {
+  // Don't render the form if already authenticated and not finalizing sign-up
+  if (
+    session.data?.user &&
+    !isFinalizing &&
+    !(() => {
+      try {
+        return !!localStorage.getItem("signup_user_role");
+      } catch {
+        return false;
+      }
+    })()
+  ) {
     return (
       <AuthLayout mode="signup">
         <div className="text-center px-4">
@@ -83,6 +107,20 @@ export default function SignUpPage() {
       </AuthLayout>
     );
   }
+
+  const updateUserRole = async (userId: string, role: "parent" | "student") => {
+    console.log("🎯 [SignUp] Updating user role in DB:", { userId, role });
+    try {
+      const updatedUser = await userApi.updateUser(userId, { role });
+      console.log("✅ [SignUp] Role updated:", updatedUser);
+      toast.success("Account role updated successfully");
+      return updatedUser;
+    } catch (error) {
+      console.error("❌ [SignUp] Failed to update user role:", error);
+      toast.warning("Account created, but role update failed");
+      throw error;
+    }
+  };
 
   const createUserProfiles = async (userId: string) => {
     setIsCreatingProfile(true);
@@ -188,7 +226,13 @@ export default function SignUpPage() {
       setError("Passwords don&apos;t match");
       return;
     }
+
+    if (!hasAcceptedTerms) {
+      setError("Please accept the Terms and Conditions to continue");
+      return;
+    }
     setIsLoading(true);
+    setIsFinalizing(true);
     setError("");
 
     try {
@@ -206,25 +250,11 @@ export default function SignUpPage() {
       localStorage.setItem("signup_user_role", userType);
       console.log("🎯 [SignUp] Stored user role in localStorage:", userType);
 
-      // Use custom signup endpoint to handle role assignment
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          name: `${formData.firstName} ${formData.lastName}`,
-          role: userType,
-        }),
+      const result = await signUp.email({
+        email: formData.email,
+        password: formData.password,
+        name: `${formData.firstName} ${formData.lastName}`,
       });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to create account");
-      }
 
       console.log("Sign-up result:", result);
 
@@ -233,20 +263,35 @@ export default function SignUpPage() {
       }
 
       // If signup was successful and we have a user ID, create user profile
-      if (result.success && result.user && result.user.id) {
+      // The user data is nested in result.data.user
+      if (
+        "data" in result &&
+        result.data?.user &&
+        typeof result.data.user === "object" &&
+        "id" in result.data.user
+      ) {
         console.log(
           "🎯 [SignUp] User created successfully, creating profile for role:",
           userType === "parent" ? "PARENT" : "STUDENT"
         );
-        console.log("🎯 [SignUp] User object:", result.user);
+        console.log("🎯 [SignUp] User object:", result.data.user);
 
-        // Add a small delay to ensure user data is saved in database
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        // Add a small delay to ensure user data is saved
+        await new Promise((resolve) => setTimeout(resolve, 600));
 
-        await createUserProfiles(result.user.id);
+        const createdUserId = result.data.user.id as string;
+        // 1) Patch role first
+        await updateUserRole(createdUserId, userType as "parent" | "student");
+        // 2) Then create the respective profile
+        await createUserProfiles(createdUserId);
       } else {
-        console.log("No user ID found in result, skipping profile creation");
-        console.log("Result structure:", result);
+        console.log(
+          "No user ID found in result, skipping teacher profile creation"
+        );
+        console.log("Result structure:", Object.keys(result || {}));
+        if ("data" in result && result.data) {
+          console.log("Data structure:", Object.keys(result.data));
+        }
       }
 
       toast.success("Account created successfully! Welcome to the platform.");
@@ -265,6 +310,7 @@ export default function SignUpPage() {
       setError(err instanceof Error ? err.message : "Failed to sign up");
     } finally {
       setIsLoading(false);
+      setIsFinalizing(false);
     }
   };
 
@@ -603,6 +649,8 @@ export default function SignUpPage() {
                     <input
                       id="terms"
                       type="checkbox"
+                      checked={hasAcceptedTerms}
+                      onChange={(e) => setHasAcceptedTerms(e.target.checked)}
                       className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
                       required
                     />
@@ -611,19 +659,16 @@ export default function SignUpPage() {
                       className="text-sm text-slate-600 dark:text-slate-300"
                     >
                       I agree to the{" "}
-                      <Link
-                        href="/terms"
-                        className="text-primary hover:text-primary/80 transition-colors"
-                      >
-                        Terms of Service
-                      </Link>{" "}
-                      and{" "}
-                      <Link
-                        href="/privacy"
-                        className="text-primary hover:text-primary/80 transition-colors"
-                      >
-                        Privacy Policy
-                      </Link>
+                      <TermsConditionsDialog
+                        trigger={
+                          <span className="text-primary hover:text-primary/80 transition-colors cursor-pointer underline">
+                            Terms and Conditions
+                          </span>
+                        }
+                        showAcceptButton={true}
+                        isRequired={true}
+                        onAccept={() => setHasAcceptedTerms(true)}
+                      />
                     </Label>
                   </div>
 

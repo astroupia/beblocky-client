@@ -17,6 +17,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Github, Mail, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { ForgotPasswordDialog } from "@/components/dialogs/forgot-password-dialog";
 import { signIn, useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
@@ -229,12 +230,7 @@ export default function SignInPage() {
                     Remember me
                   </Label>
                 </div>
-                <Link
-                  href="/forgot-password"
-                  className="text-sm text-primary hover:text-primary/80 transition-colors"
-                >
-                  Forgot password?
-                </Link>
+                <ForgotPasswordDialog />
               </div>
 
               <Button

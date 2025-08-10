@@ -1,6 +1,10 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "@prisma/client";
+import { Resend } from "resend";
+import { PasswordResetEmail } from "@/components/email/password-reset-email";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Initialize Prisma client
 const prisma = new PrismaClient();
@@ -32,8 +36,26 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: async ({ user, url, token }, request) => {
+      await resend.emails.send({
+        from: "app@beblocky.com",
+        to: user.email,
+        subject: "Beblocky - Reset Your Password",
+        react: PasswordResetEmail({
+          userName: user.name,
+          userEmail: user.email,
+          resetLink: url,
+          termsUrl: "https://code.beblocky.com/terms-and-conditions",
+        }),
+      });
+    },
     requireEmailVerification: false,
-    transform: (data: { name: string; email: string; password: string; role?: string }) => {
+    transform: (data: {
+      name: string;
+      email: string;
+      password: string;
+      role?: string;
+    }) => {
       return {
         email: data.email,
         password: data.password,
@@ -51,7 +73,7 @@ export const auth = betterAuth({
         // Fetch the user from database to get the role
         const user = await prisma.user.findUnique({
           where: { id: token.sub },
-          select: { role: true }
+          select: { role: true },
         });
         if (user) {
           session.user.role = user.role;
