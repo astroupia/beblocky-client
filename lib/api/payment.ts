@@ -30,23 +30,26 @@ export interface PaymentItem {
   image?: string;
 }
 
+export interface Beneficiary {
+  accountNumber: string;
+  bank: string;
+  amount: number;
+}
+
 export interface PaymentRequest {
   userId: string;
   amount: number;
   cancelUrl: string;
-  successUrl: string;
+  phone: number;
+  email?: string;
   errorUrl: string;
   notifyUrl: string;
-  phone: number; // REQUIRED for ArifPay
-  email?: string;
-  nonce?: string;
-  paymentMethods?: PaymentMethod[];
-  expireDate: Date;
+  successUrl: string;
+  paymentMethods: PaymentMethod[];
+  expireDate: string; // Changed to string to match the format
   items: PaymentItem[];
-  lang?: string;
-  transactionStatus?: PaymentStatus;
-  transactionId?: string;
-  sessionId?: string;
+  lang: string;
+  // Removed: nonce, beneficiaries, transactionStatus, transactionId, sessionId
 }
 
 export interface PaymentResponse {
@@ -181,6 +184,10 @@ export class PaymentApi {
   static async createPayment(
     paymentData: PaymentRequest
   ): Promise<ApiResponse<PaymentResponse>> {
+    console.log(
+      "🚀 [Payment API] Creating payment with payload:",
+      JSON.stringify(paymentData, null, 2)
+    );
     return this.request<PaymentResponse>("/payment", {
       method: "POST",
       body: JSON.stringify(paymentData),
@@ -259,28 +266,36 @@ export const createArifPayPayload = (
   return {
     userId,
     amount,
-    phone: parseInt(phoneNumber), // Convert string to number
+    cancelUrl: urls.cancelUrl,
+    phone: parseInt(phoneNumber),
     email,
-    ...urls,
+    errorUrl: urls.errorUrl,
+    notifyUrl: urls.notifyUrl,
+    successUrl: urls.successUrl,
     paymentMethods: [
       PaymentMethod.TELEBIRR,
       PaymentMethod.AWASH,
       PaymentMethod.AWASH_WALLET,
+      PaymentMethod.PSS,
       PaymentMethod.CBE,
       PaymentMethod.AMOLE,
       PaymentMethod.BOA,
       PaymentMethod.KACHA,
+      PaymentMethod.TELEBIRR_USSD,
       PaymentMethod.HELLOCASH,
+      PaymentMethod.MPESSA,
     ],
-    expireDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+    expireDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Convert to ISO string
     items: [
       {
         name: `${formattedPlanName} Plan`,
         quantity: 1,
         price: amount,
-        description: `${planName} subscription - ${billingCycle} billing`,
+        description: "Subscription Purchase",
+        image: "https://beblocky.com/logo.png",
       },
     ],
+    lang: "EN",
   };
 };
 

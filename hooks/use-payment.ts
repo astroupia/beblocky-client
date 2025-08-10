@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { useSession } from "@/lib/auth-client";
-import { paymentApi, PaymentMethod } from "@/lib/api/payment";
+import {
+  paymentApi,
+  PaymentMethod,
+  createArifPayPayload,
+} from "@/lib/api/payment";
 import { subscriptionApi } from "@/lib/api/subscription";
 import type { PaymentRequest, StripeCheckoutRequest } from "@/lib/api/payment";
 import {
@@ -38,33 +42,23 @@ export function usePayment(options: UsePaymentOptions = {}) {
       const baseUrl = window.location.origin;
       const billingCycle = isAnnual ? "yearly" : "monthly";
 
-      const paymentData: PaymentRequest = {
-        userId: session.user.id,
-        amount: amount * 100, // Convert to cents
-        cancelUrl: `${baseUrl}/upgrade?status=canceled`,
-        successUrl: `${baseUrl}/upgrade/success?plan=${planId}&billing=${billingCycle}`,
-        errorUrl: `${baseUrl}/upgrade?status=error`,
-        notifyUrl: `${baseUrl}/api/payment/webhook`,
-        phone: parseInt(phoneNumber), // Convert string to number for ArifPay
-        email: session.user.email,
-        expireDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-        items: [
-          {
-            name: `${planName} Plan`,
-            quantity: 1,
-            price: amount * 100,
-            description: `${planName} subscription - ${billingCycle} billing`,
-          },
-        ],
-        paymentMethods: [
-          PaymentMethod.TELEBIRR,
-          PaymentMethod.AWASH,
-          PaymentMethod.AWASH_WALLET,
-          PaymentMethod.CBE,
-          PaymentMethod.AMOLE,
-        ],
-      };
+      // Use the createArifPayPayload function to ensure correct structure
+      const paymentData = createArifPayPayload(
+        session.user.id,
+        amount,
+        phoneNumber,
+        planName,
+        billingCycle,
+        session.user.email
+      );
 
+      // Override URLs with our specific URLs
+      paymentData.cancelUrl = `${baseUrl}/upgrade?status=canceled`;
+      paymentData.successUrl = `${baseUrl}/upgrade/success?plan=${planId}&billing=${billingCycle}`;
+      paymentData.errorUrl = `${baseUrl}/upgrade?status=error`;
+      paymentData.notifyUrl = `${baseUrl}/api/payment/webhook`;
+
+      console.log("🔍 [Payment API] Sending ARIFPAY payload:", paymentData);
       const response = await paymentApi.createArifPayPayment(paymentData);
 
       // Store payment session info for later use
@@ -192,9 +186,8 @@ export function usePayment(options: UsePaymentOptions = {}) {
         nextBillingDate: endDate,
       };
 
-      const subscription = await subscriptionApi.createSubscription(
-        subscriptionData
-      );
+      const subscription =
+        await subscriptionApi.createSubscription(subscriptionData);
 
       // Clear payment session from localStorage
       localStorage.removeItem("payment_session");
