@@ -5,7 +5,7 @@ import type {
   ICreateCourseWithContentDto,
   ICourseRatingResponse,
   ICourseRatingStats,
-} from "@/types/dashboard";
+} from "@/types/course";
 
 // API Response types
 export interface ApiResponse<T> {

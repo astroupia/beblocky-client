@@ -1,31 +1,37 @@
 // Dashboard Types (cleaned from mongoose/firebase dependencies)
 
-// Course Types
-export enum CourseSubscriptionType {
-  FREE = "free",
-  STARTER = "starter",
-  BUILDER = "builder",
-  PRO = "pro-bundle",
-  ORGANIZATION = "organization",
+// Import types from other modules
+export type { ICourse } from "../course";
+export type {
+  IStudent,
+  ICreateStudentDto,
+  IUpdateStudentDto,
+} from "../student";
+export type { IParent, ICreateParentDto, IUpdateParentDto } from "../parent";
+export type { ISlide, ICreateSlideDto, IUpdateSlideDto } from "../slide";
+export type {
+  ISubscription,
+  ICreateSubscriptionDto,
+  IUpdateSubscriptionDto,
+} from "../subscription";
+
+// Re-export enums
+export { CourseSubscriptionType, CourseStatus } from "../course";
+export { Gender } from "../student";
+export { RelationshipType } from "../parent";
+export { SubscriptionPlan, SubscriptionStatus } from "../subscription";
+
+// Dashboard-specific types that extend the base types
+export interface IStudentDashboard extends IStudent {
+  // Additional dashboard-specific properties can be added here
 }
 
-export enum CourseStatus {
-  ACTIVE = "Active",
-  DRAFT = "Draft",
+export interface IParentDashboard extends IParent {
+  // Additional dashboard-specific properties can be added here
 }
 
-export interface ICourse {
-  _id: string;
-  courseTitle: string;
-  courseDescription: string;
-  courseLanguage: string;
-  subType: CourseSubscriptionType;
-  status: CourseStatus;
-  rating: number;
-  language: string;
-  progress?: number;
-  createdAt: string | Date;
-  updatedAt: string | Date;
+export interface ISlideDashboard extends ISlide {
+  // Additional dashboard-specific properties can be added here
 }
 
 // Lesson Types
@@ -68,56 +74,6 @@ export interface IReorderLessonsDto {
   lessonIds: string[];
 }
 
-// Slide Types
-export interface ISlide {
-  _id: string;
-  title: string;
-  content?: string;
-  order: number;
-  courseId: string;
-  lessonId: string;
-  titleFont?: string;
-  contentFont?: string;
-  startingCode?: string;
-  solutionCode?: string;
-  imageUrls?: string[];
-  backgroundColor?: string;
-  textColor?: string;
-  themeColors?: {
-    main: string;
-    secondary: string;
-  };
-  imageUrl?: string;
-  videoUrl?: string;
-  createdAt: string | Date;
-  updatedAt: string | Date;
-}
-
-export interface ICreateSlideDto {
-  title: string;
-  content?: string;
-  order: number;
-  courseId: string;
-  lessonId: string;
-  titleFont?: string;
-  contentFont?: string;
-  startingCode?: string;
-  solutionCode?: string;
-  imageUrls?: string[];
-  backgroundColor?: string;
-  textColor?: string;
-  themeColors?: {
-    main: string;
-    secondary: string;
-  };
-  imageUrl?: string;
-  videoUrl?: string;
-}
-
-export type IUpdateSlideDto = Partial<
-  Omit<ICreateSlideDto, "courseId" | "lessonId">
->;
-
 // Course DTOs
 export interface ICreateCourseDto {
   courseTitle: string;
@@ -144,57 +100,6 @@ export interface ICreateCourseWithContentDto {
   status?: CourseStatus;
   rating?: number;
   language?: string;
-}
-
-// User Types
-export enum Gender {
-  MALE = "male",
-  FEMALE = "female",
-  OTHER = "other",
-}
-
-export enum RelationshipType {
-  MOTHER = "mother",
-  FATHER = "father",
-  GUARDIAN = "guardian",
-  OTHER = "other",
-}
-
-export interface IStudent {
-  _id: string;
-  name: string;
-  email: string;
-  dateOfBirth?: string | Date;
-  grade?: number;
-  gender?: Gender;
-  enrolledCourses: string[];
-  coins: number;
-  codingStreak: number;
-  lastCodingActivity: string | Date;
-  totalCoinsEarned: number;
-  totalTimeSpent: number;
-  goals?: string[];
-  subscription?: string;
-  createdAt: string | Date;
-  updatedAt: string | Date;
-}
-
-export interface ICreateStudentDto {
-  name: string;
-  email: string;
-  dateOfBirth?: string | Date;
-  grade?: number;
-  gender?: Gender;
-  subscription?: string;
-  goals?: string[];
-}
-
-export interface IUpdateStudentDto extends Partial<ICreateStudentDto> {
-  enrolledCourses?: string[];
-  coins?: number;
-  codingStreak?: number;
-  totalCoinsEarned?: number;
-  totalTimeSpent?: number;
 }
 
 // Progress Types
@@ -240,22 +145,7 @@ export interface IChildProgressSummary {
   }>;
 }
 
-export interface IParent {
-  _id: string;
-  name: string;
-  email: string;
-  children: string[];
-  relationship: RelationshipType;
-  phoneNumber: string;
-  address: {
-    subCity: string;
-    city: string;
-    country: string;
-  };
-  createdAt: string | Date;
-  updatedAt: string | Date;
-}
-
+// Stats Types
 export interface IStudentStats {
   totalCourses: number;
   activeCourses: number;
@@ -273,6 +163,7 @@ export interface IParentStats {
   totalCoinsEarned: number;
 }
 
+// Dashboard Props
 export interface IStudentDashboardProps {
   courses: ICourse[];
   stats: IStudentStats;
@@ -295,7 +186,7 @@ export interface IDashboardProps {
   stats: IStudentStats | IParentStats;
 }
 
-// Course Rating Types
+// Rating Types
 export enum RatingValue {
   ONE = 1,
   TWO = 2,

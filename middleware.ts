@@ -2,13 +2,24 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Add paths that should be accessible without authentication
-const publicPaths = ["/sign-in", "/sign-up"];
+const publicPaths = ["/sign-in", "/sign-up", "/reset-password"];
+
+// Add regex patterns for Better Auth callback URLs
+const publicPathPatterns = [
+  /^\/sign-in/,
+  /^\/sign-up/,
+  /^\/reset-pasword/,
+  /^\/api\/auth\/reset-password\/[^?]+/, // Better Auth reset password callback
+  /^\/api\/auth\/[^/]+\/[^?]+/, // General Better Auth callbacks
+];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check if the path is public
-  const isPublicPath = publicPaths.some((path) => pathname.startsWith(path));
+  // Check if the path is public using both exact matches and regex patterns
+  const isPublicPath =
+    publicPaths.some((path) => pathname.startsWith(path)) ||
+    publicPathPatterns.some((pattern) => pattern.test(pathname));
 
   // Check for better-auth session token - check multiple possible cookie names for deployed environments
   const sessionToken =

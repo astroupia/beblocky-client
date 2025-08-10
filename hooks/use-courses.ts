@@ -5,7 +5,7 @@ import type {
   ICourse,
   ICreateCourseDto,
   IUpdateCourseDto,
-} from "@/types/dashboard";
+} from "@/types/course";
 
 interface UseCoursesReturn {
   courses: ICourse[];
@@ -44,6 +44,21 @@ export function useCourses(): UseCoursesReturn {
         "🔍 [useCourses] Data length:",
         Array.isArray(data) ? data.length : "Not an array"
       );
+
+      // Log each course details
+      if (Array.isArray(data)) {
+        data.forEach((course, index) => {
+          console.log(`🔍 [useCourses] Course ${index}:`, {
+            _id: course._id,
+            title: course.courseTitle,
+            status: course.status,
+            subType: course.subType,
+            language: course.courseLanguage,
+            fullCourse: course,
+          });
+        });
+      }
+
       setCourses(data);
       console.log("🔍 [useCourses] Courses state updated with:", data);
     } catch (err) {

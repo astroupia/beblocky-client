@@ -2,11 +2,11 @@
 // import { ICreateLessonDto, ICreateSlideDto } from "..";
 
 export enum CourseSubscriptionType {
-  FREE = "free",
-  STARTER = "starter",
-  BUILDER = "builder",
-  PRO = "pro-bundle",
-  ORGANIZATION = "organization",
+  FREE = "Free",
+  STARTER = "Starter",
+  BUILDER = "Builder",
+  PRO = "Pro-Bundle",
+  ORGANIZATION = "Organization",
 }
 
 export enum CourseStatus {
@@ -15,6 +15,7 @@ export enum CourseStatus {
 }
 
 export interface ICourse {
+  _id: string;
   courseTitle: string;
   courseDescription: string;
   courseLanguage: string;
@@ -26,6 +27,7 @@ export interface ICourse {
   status: CourseStatus;
   rating: number;
   language: string;
+  progress?: number; // Progress percentage for enrolled students
   createdAt: Date;
   updatedAt: Date;
 }

@@ -18,18 +18,20 @@ import { useState, useEffect } from "react";
 import { childrenApi } from "@/lib/api/children";
 import { courseApi } from "@/lib/api/course";
 import { userApi } from "@/lib/api/user";
+import { studentApi } from "@/lib/api/student";
+import { progressApi } from "@/lib/api/progress";
 import { parentApi } from "@/lib/api/parent";
 import { AddChildDialog } from "@/components/children/add-child-dialog";
 
 import { useToast } from "@/hooks/use-toast";
 import type {
   IStudent,
-  ICourse,
   IStudentStats,
   IParentStats,
   IParentDashboardProps,
   IParent,
 } from "@/types/dashboard";
+import type { ICourse } from "@/types/course";
 import { RelationshipType } from "@/types/dashboard";
 import type { IUser } from "@/lib/api/user";
 import type { IParent as IApiParent } from "@/lib/api/parent";
@@ -171,24 +173,55 @@ export default function DashboardPage() {
           const [coursesData] = await Promise.all([
             courseApi.fetchAllCourses(),
           ]);
-
           setCourses(coursesData);
 
-          // Calculate student stats (using session user data)
-          const totalCourses = coursesData.length;
-          const activeCourses = coursesData.filter(
-            (course) => course.status === "Active"
-          ).length;
+          // Fetch student by userId to derive real stats
+          try {
+            const student = await studentApi.getStudentByUserId(
+              userDataResponse._id
+            );
+            const totalCourses = coursesData.length;
+            const activeCourses = coursesData.filter(
+              (course) => course.status === "Active"
+            ).length;
 
-          // For now, use default values - these would come from real progress data
-          setStudentStats({
-            totalCourses,
-            activeCourses,
-            totalCoins: 1250, // This would come from real data
-            codingStreak: 15, // This would come from real data
-            timeSpent: 480, // This would come from real data
-            averageProgress: 50, // This would come from real progress calculation
-          });
+            // Get enrolled courses count from progress
+            let enrolledCoursesCount = 0;
+            try {
+              const progressData = await progressApi.getStudentProgress(
+                student._id
+              );
+              enrolledCoursesCount = progressData.length;
+            } catch (error) {
+              console.warn("Failed to fetch progress data:", error);
+            }
+
+            setStudentStats({
+              totalCourses: enrolledCoursesCount, // Show enrolled courses instead of total
+              activeCourses,
+              totalCoins: student.totalCoinsEarned || 0,
+              codingStreak: student.codingStreak || 0,
+              timeSpent: student.totalTimeSpent || 0,
+              averageProgress: 50, // TODO: compute from real progress when available
+            });
+          } catch (e) {
+            console.warn(
+              "🎯 [DashboardPage] Failed to fetch student record",
+              e
+            );
+            const totalCourses = coursesData.length;
+            const activeCourses = coursesData.filter(
+              (course) => course.status === "Active"
+            ).length;
+            setStudentStats({
+              totalCourses,
+              activeCourses,
+              totalCoins: 0,
+              codingStreak: 0,
+              timeSpent: 0,
+              averageProgress: 0,
+            });
+          }
         }
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
@@ -248,10 +281,8 @@ export default function DashboardPage() {
 
       // Create a mock parent object from session data
       const parentData: IParent = {
-        _id: session.user.id,
-        name: session.user.name,
-        email: session.user.email,
-        children: children.map((child) => child._id),
+        userId: session.user.id,
+        children: children.map((child, index) => `child-${index}`), // Mock child IDs
         relationship: RelationshipType.MOTHER, // This would come from real data
         phoneNumber: "+1234567890", // This would come from real data
         address: {
@@ -259,16 +290,18 @@ export default function DashboardPage() {
           city: "New York",
           country: "USA",
         },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        subscription: "",
+        paymentHistory: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       // Create a mock parent object that matches the dashboard interface
       const mockParent = {
-        _id: parentData?._id || "",
+        _id: session?.user?.id || "",
         name: session?.user?.name || "Parent",
         email: session?.user?.email || "",
-        children: parentData?.children || [],
+        children: children.map((child, index) => `child-${index}`),
         relationship: RelationshipType.MOTHER,
         phoneNumber: parentData?.phoneNumber || "",
         address: parentData?.address || {
@@ -276,8 +309,8 @@ export default function DashboardPage() {
           city: "",
           country: "",
         },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
       const parentDashboardProps: IParentDashboardProps & {
