@@ -28,7 +28,7 @@ interface PaymentMethodSelectorProps {
   onProviderChange?: (provider: PaymentProvider) => void;
   onSelect: (
     provider: PaymentProvider,
-    paymentData?: ArifPayPaymentData
+    paymentData?: ArifPayPaymentData | StripePaymentData
   ) => void;
   onPaymentInitiated?: (paymentUrl: string) => void;
   selectedProvider?: PaymentProvider;
@@ -38,6 +38,15 @@ interface PaymentMethodSelectorProps {
   planName: string;
   billingCycle: string;
   amount: number;
+}
+
+interface StripePaymentData {
+  phoneNumber: string;
+  userId: string;
+  amount: number;
+  planName: string;
+  billingCycle: string;
+  email?: string;
 }
 
 interface ArifPayPaymentData {
@@ -109,10 +118,20 @@ export function PaymentMethodSelector({
   const [isProcessing, setIsProcessing] = useState(false);
   const [focusedInput, setFocusedInput] = useState(false);
 
-  const validatePhoneNumber = useCallback((phone: string): boolean => {
-    const phoneRegex = /^251[0-9]{9}$/;
-    return phoneRegex.test(phone.replace(/\s+/g, ""));
-  }, []);
+  const validatePhoneNumber = useCallback(
+    (phone: string, isInternational: boolean = false): boolean => {
+      if (isInternational) {
+        // International phone validation - basic format check
+        const internationalRegex = /^\+?[1-9]\d{1,14}$/;
+        return internationalRegex.test(phone.replace(/\s+/g, ""));
+      } else {
+        // Ethiopian phone validation
+        const phoneRegex = /^251[0-9]{9}$/;
+        return phoneRegex.test(phone.replace(/\s+/g, ""));
+      }
+    },
+    []
+  );
 
   const handlePhoneChange = useCallback((value: string) => {
     const cleanValue = value.replace(/[^\d]/g, "");
@@ -125,10 +144,7 @@ export function PaymentMethodSelector({
       console.log("🧭 [Payment] Provider selected:", provider);
       // Only inform parent that provider changed; don't trigger payment
       onProviderChange?.(provider);
-      if (provider !== PaymentProvider.ARIFPAY) {
-        setPhoneNumber("");
-        setPhoneError("");
-      }
+      // Keep phone number for both payment methods now
     },
     [onProviderChange]
   );
@@ -146,10 +162,20 @@ export function PaymentMethodSelector({
         setPhoneError("Phone number is required for local payment");
         return;
       }
-      if (!validatePhoneNumber(cleanPhone)) {
+      if (!validatePhoneNumber(cleanPhone, false)) {
         setPhoneError(
           "Please enter a valid Ethiopian phone number (format: 251912345678)"
         );
+        return;
+      }
+    } else if (selectedProvider === PaymentProvider.STRIPE) {
+      const cleanPhone = phoneNumber.replace(/\s+/g, "");
+      if (!cleanPhone.trim()) {
+        setPhoneError("Phone number is required for payment verification");
+        return;
+      }
+      if (!validatePhoneNumber(cleanPhone, true)) {
+        setPhoneError("Please enter a valid phone number with country code");
         return;
       }
 
@@ -188,27 +214,60 @@ export function PaymentMethodSelector({
         setIsProcessing(false);
       }
     } else if (selectedProvider === PaymentProvider.STRIPE) {
-      console.log("🧭 [Payment] Initiating STRIPE payment flow");
-      // For Stripe, call onSelect with provider only (no payment data)
-      onSelect(selectedProvider);
+      const cleanPhone = phoneNumber.replace(/\s+/g, "");
+      if (!cleanPhone.trim()) {
+        setPhoneError("Phone number is required for payment verification");
+        return;
+      }
+      if (!validatePhoneNumber(cleanPhone, true)) {
+        setPhoneError("Please enter a valid phone number with country code");
+        return;
+      }
 
-      console.log("🧭 [Payment] Submitting STRIPE payload for plan:", {
-        planName,
-        amount,
-        billingCycle,
-      });
-      if (onPaymentInitiated) {
-        onPaymentInitiated("https://stripe.example.com/checkout");
+      try {
+        setIsProcessing(true);
+        setPhoneError("");
+
+        if (!userId || !amount || !planName || !billingCycle) {
+          setPhoneError(
+            "Missing required payment information. Please try again."
+          );
+          return;
+        }
+
+        // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        const stripeData = {
+          phoneNumber: cleanPhone,
+          userId,
+          amount,
+          planName,
+          billingCycle,
+          email: userEmail,
+        };
+
+        console.log("🧭 [Payment] Submitting STRIPE payload:", stripeData);
+        // For Stripe, call onSelect with provider and phone data
+        onSelect(selectedProvider, stripeData);
+
+        if (onPaymentInitiated) {
+          onPaymentInitiated("https://stripe.example.com/checkout");
+        }
+      } catch (error) {
+        setPhoneError("Failed to initiate payment. Please try again.");
+      } finally {
+        setIsProcessing(false);
       }
     }
   };
 
   return (
-    <div className="space-y-6 h-full max-h-[unset] w-full max-w-full">
+    <div className="space-y-4 sm:space-y-6 h-full max-h-[unset] w-full max-w-full px-4 sm:px-0">
       <PaymentHeader />
 
       <AnimatePresence>
-        {selectedProvider === PaymentProvider.ARIFPAY && (
+        {selectedProvider && (
           <motion.div
             initial={{ opacity: 0, height: 0, y: -20 }}
             animate={{ opacity: 1, height: "auto", y: 0 }}
@@ -224,6 +283,7 @@ export function PaymentMethodSelector({
               onFocus={() => setFocusedInput(true)}
               onBlur={() => setFocusedInput(false)}
               validatePhoneNumber={validatePhoneNumber}
+              isInternational={selectedProvider === PaymentProvider.STRIPE}
             />
           </motion.div>
         )}
@@ -232,7 +292,7 @@ export function PaymentMethodSelector({
       <RadioGroup
         value={selectedProvider}
         onValueChange={(value) => handleSelect(value as PaymentProvider)}
-        className="space-y-4"
+        className="space-y-3 sm:space-y-4"
       >
         {paymentMethods.map((method, index) => (
           <PaymentCard

@@ -15,11 +15,10 @@ export interface ApiResponse<T> {
 export interface IAddChildDto {
   email: string;
   grade: number;
-  section: string;
   // Optional demographic fields used during student creation
   dateOfBirth?: string; // ISO or yyyy-mm-dd
   gender?: "male" | "female" | "other";
-  emergencyContact: {
+  emergencyContact?: {
     name: string;
     relationship: string;
     phone: string;

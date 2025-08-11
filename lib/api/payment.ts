@@ -80,13 +80,20 @@ export interface ArifPayPaymentData {
 
 // Stripe Types
 export interface StripeCheckoutRequest {
+  userId: string;
   items: {
+    name: string;
     price: string;
     quantity: number;
-  };
+    description?: string;
+  }[];
   successUrl: string;
   cancelUrl: string;
-  userId: string;
+  errorUrl: string;
+  notifyUrl: string;
+  phone: number;
+  expireDate: string;
+  mode?: "payment" | "subscription"; // Add mode parameter for subscription support
 }
 
 export interface StripeCheckoutResponse {
@@ -159,7 +166,7 @@ export class PaymentApi {
     options?: RequestInit
   ): Promise<ApiResponse<T>> {
     try {
-      const data = await simpleFetch<ApiResponse<T>>(endpoint, options);
+      const data = await simpleFetch<any>(endpoint, options);
 
       // If the response is already an array, wrap it in the expected format
       if (Array.isArray(data)) {
@@ -173,7 +180,26 @@ export class PaymentApi {
         } as ApiResponse<T>;
       }
 
-      return data;
+      // If the response has the expected ApiResponse structure, return it as is
+      if (
+        data &&
+        typeof data === "object" &&
+        "data" in data &&
+        "success" in data
+      ) {
+        console.log("✅ [Payment API] Response has ApiResponse structure");
+        return data as ApiResponse<T>;
+      }
+
+      // If the response is the data directly (like Stripe response), wrap it
+      console.log(
+        "✅ [Payment API] Wrapping direct response in ApiResponse format"
+      );
+      return {
+        data: data as T,
+        success: true,
+        message: "Request successful",
+      } as ApiResponse<T>;
     } catch (error) {
       console.error("❌ [Payment API] Request failed:", error);
       throw error;
@@ -246,7 +272,8 @@ export const createArifPayPayload = (
   phoneNumber: string,
   planName: string,
   billingCycle: string,
-  email?: string
+  email?: string,
+  currency: "USD" | "ETB" | "KES" | "NGN" = "USD"
 ): PaymentRequest => {
   // Validate required parameters
   if (!userId || !amount || !phoneNumber || !planName || !billingCycle) {
@@ -263,9 +290,25 @@ export const createArifPayPayload = (
       ? `${planName.charAt(0).toUpperCase()}${planName.slice(1)}`
       : "Premium";
 
+  // Convert amount to ETB for local payments (ArifPay)
+  const currencyRates = {
+    USD: 1,
+    ETB: 160,
+    KES: 129.2,
+    NGN: 1531.87,
+  };
+
+  // For local payments (ArifPay), always convert to ETB
+  // If the amount is already in USD, just multiply by ETB rate
+  // If the amount is in another currency, first convert to USD, then to ETB
+  const etbAmount =
+    currency === "USD"
+      ? Math.round(amount * currencyRates.ETB)
+      : Math.round((amount / currencyRates[currency]) * currencyRates.ETB);
+
   return {
     userId,
-    amount,
+    amount: etbAmount,
     cancelUrl: urls.cancelUrl,
     phone: parseInt(phoneNumber),
     email,
@@ -290,9 +333,10 @@ export const createArifPayPayload = (
       {
         name: `${formattedPlanName} Plan`,
         quantity: 1,
-        price: amount,
+        price: etbAmount,
         description: "Subscription Purchase",
-        image: "https://beblocky.com/logo.png",
+        image:
+          "https://code.beblocky.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-logo.55ac8515.png&w=96&q=75",
       },
     ],
     lang: "EN",
@@ -343,7 +387,13 @@ export const paymentApi = {
   async createStripeCheckout(
     checkoutData: StripeCheckoutRequest
   ): Promise<StripeCheckoutResponse> {
+    console.log(
+      "🔍 [Payment API Instance] Calling createStripeCheckout with:",
+      checkoutData
+    );
     const response = await PaymentApi.createStripeCheckout(checkoutData);
+    console.log("🔍 [Payment API Instance] Raw response:", response);
+    console.log("🔍 [Payment API Instance] Response data:", response.data);
     return response.data;
   },
 

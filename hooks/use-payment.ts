@@ -29,7 +29,8 @@ export function usePayment(options: UsePaymentOptions = {}) {
     planName: string,
     amount: number,
     phoneNumber: string,
-    isAnnual: boolean = false
+    isAnnual: boolean = false,
+    currency: "USD" | "ETB" | "KES" | "NGN" = "USD"
   ) => {
     if (!session?.user?.id) {
       throw new Error("User not authenticated");
@@ -49,7 +50,8 @@ export function usePayment(options: UsePaymentOptions = {}) {
         phoneNumber,
         planName,
         billingCycle,
-        session.user.email
+        session.user.email,
+        currency
       );
 
       // Override URLs with our specific URLs
@@ -91,7 +93,8 @@ export function usePayment(options: UsePaymentOptions = {}) {
     planId: string,
     planName: string,
     stripePriceId: string,
-    isAnnual: boolean = false
+    isAnnual: boolean = false,
+    phoneNumber?: string
   ) => {
     if (!session?.user?.id) {
       throw new Error("User not authenticated");
@@ -105,16 +108,34 @@ export function usePayment(options: UsePaymentOptions = {}) {
       const billingCycle = isAnnual ? "yearly" : "monthly";
 
       const checkoutData: StripeCheckoutRequest = {
-        items: {
-          price: stripePriceId,
-          quantity: 1,
-        },
+        userId: session.user.id,
+        items: [
+          {
+            name: `${planName} Plan`,
+            price: stripePriceId,
+            quantity: 1,
+            description: `${billingCycle} subscription`,
+          },
+        ],
         successUrl: `${baseUrl}/upgrade/success?plan=${planId}&billing=${billingCycle}`,
         cancelUrl: `${baseUrl}/upgrade?status=canceled`,
-        userId: session.user.id,
+        errorUrl: `${baseUrl}/upgrade?status=error`,
+        notifyUrl: `${baseUrl}/api/payment/webhook`,
+        phone: phoneNumber
+          ? parseInt(phoneNumber.replace(/\s+/g, ""))
+          : 251911234567, // Use provided phone or default
+        expireDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        mode: "subscription", // Set mode to subscription for recurring payments
       };
 
       const response = await paymentApi.createStripeCheckout(checkoutData);
+
+      console.log("🔍 [Payment Hook] Stripe response:", response);
+
+      // Check if response is valid
+      if (!response || !response.sessionId || !response.url) {
+        throw new Error("Invalid response from Stripe API");
+      }
 
       // Store payment session info for later use
       localStorage.setItem(
@@ -129,6 +150,12 @@ export function usePayment(options: UsePaymentOptions = {}) {
       );
 
       options.onSuccess?.(response);
+
+      // Redirect to Stripe checkout
+      if (response.url) {
+        window.location.href = response.url;
+      }
+
       return response;
     } catch (err) {
       const errorMessage =

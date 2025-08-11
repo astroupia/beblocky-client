@@ -14,6 +14,7 @@ interface PhoneInputProps {
   onFocus: () => void;
   onBlur: () => void;
   validatePhoneNumber: (phone: string) => boolean;
+  isInternational?: boolean;
 }
 
 const PhoneInput: React.FC<PhoneInputProps> = ({
@@ -24,20 +25,23 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   onFocus,
   onBlur,
   validatePhoneNumber,
+  isInternational = false,
 }) => (
   <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 border-blue-200 dark:border-blue-800">
-    <CardContent className="p-8">
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-            <Phone className="h-5 w-5 text-blue-600" />
+    <CardContent className="p-4 sm:p-8">
+      <div className="space-y-3 sm:space-y-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="p-1.5 sm:p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+            <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
           </div>
           <div>
-            <Label className="text-base font-semibold">
+            <Label className="text-sm sm:text-base font-semibold">
               Phone Number <span className="text-destructive">*</span>
             </Label>
-            <p className="text-sm text-muted-foreground">
-              Required for local payment processing
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              {isInternational
+                ? "Required for payment verification and support"
+                : "Required for local payment processing"}
             </p>
           </div>
         </div>
@@ -51,15 +55,17 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
             <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="tel"
-              placeholder="2519 00 0000 00"
+              placeholder={
+                isInternational ? "+1 234 567 8900" : "2519 00 0000 00"
+              }
               value={phoneNumber}
               onChange={(e) => onPhoneChange(e.target.value)}
               onFocus={onFocus}
               onBlur={onBlur}
-              className={`pl-10 h-12 text-lg transition-all duration-200 ${
+              className={`pl-10 h-10 sm:h-12 text-base sm:text-lg transition-all duration-200 ${
                 focusedInput ? "ring-2 ring-primary/20 border-primary/50" : ""
               } ${phoneError ? "border-destructive ring-destructive/20" : ""}`}
-              maxLength={12}
+              maxLength={isInternational ? 15 : 12}
               required
             />
             {phoneNumber && validatePhoneNumber(phoneNumber) && (
@@ -91,7 +97,11 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
 
           <p className="text-xs text-muted-foreground mt-2 flex items-center gap-2">
             <Shield className="h-3 w-3" />
-            Enter your Ethiopian phone number with country code 251
+            <span className="text-xs">
+              {isInternational
+                ? "Enter your phone number with country code for payment verification"
+                : "Enter your Ethiopian phone number with country code 251"}
+            </span>
           </p>
         </div>
       </div>

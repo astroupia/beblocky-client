@@ -25,6 +25,7 @@ interface PricingPlansProps {
   getPrice: (plan: PricingPlan) => string;
   getPeriod: (plan: PricingPlan) => string;
   onChoosePlan: (planId: string) => void;
+  currentUserPlan?: string | null;
 }
 
 export function PricingPlans({
@@ -32,7 +33,41 @@ export function PricingPlans({
   getPrice,
   getPeriod,
   onChoosePlan,
+  currentUserPlan,
 }: PricingPlansProps) {
+  // Helper function to determine if plan should show "Choose Plan" button
+  const shouldShowChoosePlan = (planId: string) => {
+    // Don't show for free plan
+    if (planId === "free") return false;
+
+    // If no current plan, show all paid plans
+    if (!currentUserPlan || currentUserPlan === "free") return true;
+
+    // Define plan hierarchy (higher index = higher tier)
+    const planHierarchy = ["free", "starter", "builder", "pro"];
+    const currentPlanIndex = planHierarchy.indexOf(currentUserPlan);
+    const planIndex = planHierarchy.indexOf(planId);
+
+    // Only show plans that are higher tier than current plan
+    return planIndex > currentPlanIndex;
+  };
+
+  // Helper function to determine if plan is current user's plan
+  const isCurrentUserPlan = (planId: string) => {
+    return currentUserPlan === planId;
+  };
+
+  // Helper function to determine if plan is lower than current user's plan
+  const isLowerThanCurrentPlan = (planId: string) => {
+    if (!currentUserPlan || currentUserPlan === "free") return false;
+
+    const planHierarchy = ["free", "starter", "builder", "pro"];
+    const currentPlanIndex = planHierarchy.indexOf(currentUserPlan);
+    const planIndex = planHierarchy.indexOf(planId);
+
+    return planIndex < currentPlanIndex;
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -50,7 +85,7 @@ export function PricingPlans({
 
   return (
     <motion.div
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -68,62 +103,73 @@ export function PricingPlans({
               </div>
             )}
 
-            <CardHeader className={`pt-6 ${plan.popular ? "mt-8" : ""}`}>
-              <div className="flex items-center gap-3 mb-4">
+            <CardHeader
+              className={`pt-4 sm:pt-6 ${plan.popular ? "mt-6 sm:mt-8" : ""}`}
+            >
+              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                 <div
-                  className={`p-3 rounded-lg bg-gradient-to-br ${plan.gradient}`}
+                  className={`p-2 sm:p-3 rounded-lg bg-gradient-to-br ${plan.gradient}`}
                 >
                   {plan.icon}
                 </div>
                 <div>
-                  <CardTitle className="text-xl font-bold">
+                  <CardTitle className="text-lg sm:text-xl font-bold">
                     {plan.name}
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     {plan.audience}
                   </p>
                 </div>
               </div>
 
-              <div className="mb-4">
+              <div className="mb-3 sm:mb-4">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold">{getPrice(plan)}</span>
-                  <span className="text-muted-foreground">
+                  <span className="text-2xl sm:text-3xl font-bold">
+                    {getPrice(plan)}
+                  </span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">
                     {getPeriod(plan)}
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                   {plan.description}
                 </p>
               </div>
             </CardHeader>
 
             <CardContent className="pt-0">
-              <ul className="space-y-3 mb-6">
+              <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
                 {plan.features.map((feature, index) => (
                   <li key={index} className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">{feature}</span>
+                    <Check className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">{feature}</span>
                   </li>
                 ))}
               </ul>
 
-              <Button
-                onClick={() => onChoosePlan(plan.id)}
-                className={`w-full ${
-                  plan.popular
-                    ? "bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
-                    : ""
-                }`}
-                disabled={plan.id === "free"}
-              >
-                {plan.id === "free" ? "Current Plan" : "Choose Plan"}
-              </Button>
-
-              {plan.note && (
-                <p className="text-xs text-muted-foreground mt-3 text-center">
-                  {plan.note}
-                </p>
+              {shouldShowChoosePlan(plan.id) ? (
+                <Button
+                  onClick={() => onChoosePlan(plan.id)}
+                  className={`w-full ${
+                    plan.popular
+                      ? "bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90"
+                      : ""
+                  }`}
+                >
+                  Choose Plan
+                </Button>
+              ) : isCurrentUserPlan(plan.id) ? (
+                <Button className="w-full" disabled>
+                  Current Plan
+                </Button>
+              ) : isLowerThanCurrentPlan(plan.id) ? (
+                <Button className="w-full" disabled>
+                  Current Plan
+                </Button>
+              ) : (
+                <Button className="w-full" disabled>
+                  Current Plan
+                </Button>
               )}
             </CardContent>
           </Card>
