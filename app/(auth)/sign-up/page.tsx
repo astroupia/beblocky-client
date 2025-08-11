@@ -280,10 +280,12 @@ export default function SignUpPage() {
         await new Promise((resolve) => setTimeout(resolve, 600));
 
         const createdUserId = result.data.user.id as string;
-        // 1) Patch role first
+        // 1) Patch role only
         await updateUserRole(createdUserId, userType as "parent" | "student");
-        // 2) Then create the respective profile
-        await createUserProfiles(createdUserId);
+        // 2) Cleanup stored role; no profile instance creation here
+        try {
+          localStorage.removeItem("signup_user_role");
+        } catch {}
       } else {
         console.log(
           "No user ID found in result, skipping teacher profile creation"

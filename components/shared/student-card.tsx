@@ -4,10 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Coins, Target, BookOpen, Clock } from "lucide-react";
 import { motion } from "framer-motion";
-import type { IStudent } from "@/types/dashboard";
+import type { IStudentWithUserData } from "@/types/enriched-student";
 
 interface StudentCardProps {
-  student: IStudent;
+  student: IStudentWithUserData;
   index: number;
   showDetailedStats?: boolean;
 }
@@ -27,7 +27,7 @@ export function StudentCard({
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg group-hover:scale-110 transition-transform">
-              {student.name?.charAt(0) || "?"}
+              {student.name?.charAt(0)?.toUpperCase() || "?"}
             </div>
             <Badge variant="secondary">Grade {student.grade || "N/A"}</Badge>
           </div>

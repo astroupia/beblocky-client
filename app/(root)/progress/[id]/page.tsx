@@ -14,8 +14,10 @@ import {
 } from "lucide-react";
 import { studentApi } from "@/lib/api/student";
 import { progressApi } from "@/lib/api/progress";
+import { userApi } from "@/lib/api/user";
 import { useToast } from "@/hooks/use-toast";
-import type { IStudent } from "@/types/dashboard";
+import type { IStudent } from "@/types/student";
+import type { IStudentResponse } from "@/lib/api/student";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
@@ -39,7 +41,11 @@ export default function StudentProgressPage() {
   const params = useParams();
   const { toast } = useToast();
   const router = useRouter();
-  const [user, setUser] = useState<IStudent | null>(null);
+  const [student, setStudent] = useState<IStudentResponse | null>(null);
+  const [userData, setUserData] = useState<{
+    name: string;
+    email: string;
+  } | null>(null);
   const [progress, setProgress] = useState<ProgressData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -47,12 +53,12 @@ export default function StudentProgressPage() {
     async (studentId: string) => {
       try {
         setLoading(true);
-        const [userData, progressData] = await Promise.all([
+        const [studentData, progressData] = await Promise.all([
           studentApi.getStudent(studentId),
           progressApi.getStudentProgress(studentId),
         ]);
 
-        if (!userData) {
+        if (!studentData) {
           toast({
             title: "Error",
             description: "Student not found.",
@@ -61,7 +67,20 @@ export default function StudentProgressPage() {
           return;
         }
 
-        setUser(userData as unknown as IStudent);
+        setStudent(studentData);
+
+        // Fetch user data to get name and email
+        try {
+          const userInfo = await userApi.getUserById(studentData.userId);
+          setUserData({
+            name: userInfo.name,
+            email: userInfo.email,
+          });
+        } catch (error) {
+          console.error("Failed to fetch user data:", error);
+          setUserData({ name: "Unknown Student", email: "" });
+        }
+
         setProgress(progressData as any);
       } catch (error) {
         toast({
@@ -95,7 +114,7 @@ export default function StudentProgressPage() {
     );
   }
 
-  if (!user || !progress) {
+  if (!student || !userData || !progress) {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center">
@@ -139,7 +158,7 @@ export default function StudentProgressPage() {
             <div>
               <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent flex items-center gap-3">
                 <TrendingUp className="h-8 w-8 text-primary" />
-                {user?.name}'s Progress
+                {userData?.name}'s Progress
               </h1>
               <p className="text-muted-foreground mt-2">
                 Detailed learning analytics and achievements
@@ -214,7 +233,7 @@ export default function StudentProgressPage() {
                       <p className="text-sm text-muted-foreground">
                         Coins Earned
                       </p>
-                      <p className="text-2xl font-bold">{user.coins}</p>
+                      <p className="text-2xl font-bold">{student.coins}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -257,7 +276,7 @@ export default function StudentProgressPage() {
                     <div>
                       <p className="font-medium">Coding Streak</p>
                       <p className="text-lg font-bold">
-                        {user.codingStreak} days
+                        {student.codingStreak} days
                       </p>
                     </div>
                   </div>
@@ -269,7 +288,7 @@ export default function StudentProgressPage() {
                     <div>
                       <p className="font-medium">Courses Enrolled</p>
                       <p className="text-lg font-bold">
-                        {user.enrolledCourses.length}
+                        {student.enrolledCourses.length}
                       </p>
                     </div>
                   </div>
@@ -281,7 +300,7 @@ export default function StudentProgressPage() {
                     <div>
                       <p className="font-medium">Total Coins</p>
                       <p className="text-lg font-bold">
-                        {user.totalCoinsEarned}
+                        {student.totalCoinsEarned}
                       </p>
                     </div>
                   </div>
@@ -318,7 +337,15 @@ export default function StudentProgressPage() {
           {/* Sidebar */}
           <div className="lg:w-1/4">
             <div className="sticky top-6">
-              <StudentInfo user={user} />
+              <StudentInfo
+                user={
+                  {
+                    ...student,
+                    name: userData?.name,
+                    email: userData?.email,
+                  } as any
+                }
+              />
             </div>
           </div>
         </div>

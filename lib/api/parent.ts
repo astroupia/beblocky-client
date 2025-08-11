@@ -1,5 +1,5 @@
 import { useSession } from "@/lib/auth-client";
-import type { IStudent } from "@/types/dashboard";
+import type { IStudent } from "@/types/student";
 import type { IAddChildDto } from "./children";
 
 export interface CreateParentFromUserDto {
@@ -33,12 +33,14 @@ class ParentApi {
       if (session && typeof session === "object" && "user" in session) {
         const user = (session as { user: { id: string; email?: string } }).user;
         if (user?.id) {
-          return {
+          const headers = {
             "Content-Type": "application/json",
             Authorization: `Bearer ${user.id}`,
             "X-User-Id": user.id,
             "X-User-Email": user.email || "",
-          };
+          } as Record<string, string>;
+          console.log("🪪 [Parent API] Using auth headers for user:", user.id);
+          return headers;
         }
       }
 
@@ -58,6 +60,12 @@ class ParentApi {
 
     const url = `${process.env.NEXT_PUBLIC_API_URL}/parents/from-user`;
 
+    console.log("➡️  [Parent API] POST createParentFromUser:", {
+      url,
+      body: { userId },
+      hasAuth: !!authHeaders.Authorization,
+    });
+
     const response = await fetch(url, {
       method: "POST",
       headers: authHeaders,
@@ -66,12 +74,15 @@ class ParentApi {
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error("❌ [Parent API] createParentFromUser failed:", errorText);
       throw new Error(
         `API Error: ${response.status} - ${response.statusText} - ${errorText}`
       );
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log("✅ [Parent API] createParentFromUser success:", data);
+    return data;
   }
 
   async getParent(parentId: string): Promise<IParent> {
@@ -165,6 +176,13 @@ class ParentApi {
 
     const url = `${process.env.NEXT_PUBLIC_API_URL}/parents/${parentId}/children`;
 
+    console.log("➡️  [Parent API] POST addChildToParent:", {
+      url,
+      parentId,
+      payload: childData,
+      hasAuth: !!authHeaders.Authorization,
+    });
+
     const response = await fetch(url, {
       method: "POST",
       headers: authHeaders,
@@ -173,12 +191,15 @@ class ParentApi {
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error("❌ [Parent API] addChildToParent failed:", errorText);
       throw new Error(
         `API Error: ${response.status} - ${response.statusText} - ${errorText}`
       );
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log("✅ [Parent API] addChildToParent success:", data);
+    return data;
   }
 
   // NEW: PATCH /parents/:parentId - Update parent information

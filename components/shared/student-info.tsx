@@ -5,10 +5,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Mail, GraduationCap, User } from "lucide-react";
 import { format } from "date-fns";
-import type { IStudent } from "@/types/dashboard";
+import type { IStudentWithUserData } from "@/types/enriched-student";
 
 interface StudentInfoProps {
-  user: IStudent;
+  user: IStudentWithUserData;
 }
 
 export function StudentInfo({ user }: StudentInfoProps) {
@@ -35,13 +35,13 @@ export function StudentInfo({ user }: StudentInfoProps) {
             <AvatarImage src={`/placeholder.svg?height=48&width=48`} />
             <AvatarFallback>
               {user.name
-                .split(" ")
+                ?.split(" ")
                 .map((n) => n[0])
-                .join("")}
+                .join("") || "?"}
             </AvatarFallback>
           </Avatar>
           <div>
-            <CardTitle className="text-lg">{user.name}</CardTitle>
+            <CardTitle className="text-lg">{user.name || "Unknown Student"}</CardTitle>
             <p className="text-sm text-muted-foreground">Student Profile</p>
           </div>
         </div>
@@ -50,7 +50,7 @@ export function StudentInfo({ user }: StudentInfoProps) {
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Mail className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">{user.email}</span>
+            <span className="text-sm">{user.email || "No email"}</span>
           </div>
 
           {user.dateOfBirth && (

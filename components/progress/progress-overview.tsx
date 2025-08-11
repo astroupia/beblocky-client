@@ -14,11 +14,12 @@ import {
   Calendar,
 } from "lucide-react";
 import { format } from "date-fns";
-import type { IStudent, ICourse } from "@/types/dashboard";
+import type { ICourse } from "@/types/course";
+import type { IStudentWithUserData } from "@/types/enriched-student";
 
 interface ProgressOverviewProps {
   data: Array<{
-    child: IStudent;
+    child: IStudentWithUserData;
     courses: Array<{
       course: ICourse;
       progress: {
@@ -44,7 +45,7 @@ export function ProgressOverview({
     return Math.round(totalProgress / courses.length);
   };
 
-  const getTotalTimeSpent = (child: IStudent) => {
+  const getTotalTimeSpent = (child: IStudentWithUserData) => {
     const hours = Math.floor(child.totalTimeSpent / 60);
     const minutes = child.totalTimeSpent % 60;
     return `${hours}h ${minutes}m`;
@@ -90,13 +91,15 @@ export function ProgressOverview({
                         />
                         <AvatarFallback>
                           {child.name
-                            .split(" ")
+                            ?.split(" ")
                             .map((n) => n[0])
-                            .join("")}
+                            .join("") || "?"}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <CardTitle className="text-xl">{child.name}</CardTitle>
+                        <CardTitle className="text-xl">
+                          {child.name || "Unknown Child"}
+                        </CardTitle>
                         <p className="text-muted-foreground">
                           Grade {child.grade} • {courses.length} courses
                           enrolled
@@ -105,7 +108,7 @@ export function ProgressOverview({
                     </div>
                     <Button
                       variant="outline"
-                      onClick={() => onViewDetails(child._id)}
+                      onClick={() => onViewDetails(child._id || "")}
                       className="gap-2"
                     >
                       View Details

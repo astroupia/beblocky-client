@@ -4,7 +4,7 @@ import type {
   ICourseRatingResponse,
   ICourseRatingStats,
   RatingValue,
-} from "@/types/dashboard";
+} from "@/types/course";
 
 interface UseCourseRatingsReturn {
   reviews: ICourseRatingResponse[];

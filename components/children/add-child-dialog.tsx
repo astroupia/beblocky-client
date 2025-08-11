@@ -27,18 +27,22 @@ interface AddChildDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   parentId?: string;
+  onSuccess?: () => void;
 }
 
 export function AddChildDialog({
   open,
   onOpenChange,
   parentId,
+  onSuccess,
 }: AddChildDialogProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<IAddChildDto>({
     email: "",
     grade: 1,
     section: "",
+    dateOfBirth: "",
+    gender: undefined,
     emergencyContact: {
       name: "",
       relationship: "",
@@ -78,12 +82,15 @@ export function AddChildDialog({
       await parentApi.addChildToParent(parentId, formData);
       toast.success("Child added successfully!");
       onOpenChange(false);
+      onSuccess?.();
 
       // Reset form
       setFormData({
         email: "",
         grade: 1,
         section: "",
+        dateOfBirth: "",
+        gender: undefined,
         emergencyContact: {
           name: "",
           relationship: "",
@@ -184,6 +191,36 @@ export function AddChildDialog({
                   onChange={(e) => handleInputChange("section", e.target.value)}
                   required
                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dob">Date of Birth</Label>
+                <Input
+                  id="dob"
+                  type="date"
+                  value={formData.dateOfBirth || ""}
+                  onChange={(e) =>
+                    handleInputChange("dateOfBirth", e.target.value)
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gender">Gender</Label>
+                <Select
+                  value={formData.gender || ""}
+                  onValueChange={(value) => handleInputChange("gender", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>

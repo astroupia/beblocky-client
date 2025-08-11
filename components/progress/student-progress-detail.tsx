@@ -14,10 +14,11 @@ import {
   Target,
 } from "lucide-react";
 import { format } from "date-fns";
-import type { IStudent, ICourse } from "@/types/dashboard";
+import type { ICourse } from "@/types/course";
+import type { IStudentWithUserData } from "@/types/enriched-student";
 
 interface StudentProgressDetailProps {
-  student: IStudent;
+  student: IStudentWithUserData;
   courses: Array<{
     course: ICourse;
     progress: {
@@ -73,13 +74,15 @@ export function StudentProgressDetail({
               <AvatarImage src={`/placeholder.svg?height=64&width=64`} />
               <AvatarFallback className="text-lg">
                 {student.name
-                  .split(" ")
+                  ?.split(" ")
                   .map((n) => n[0])
-                  .join("")}
+                  .join("") || "?"}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold">{student.name}</h1>
+              <h1 className="text-2xl font-bold">
+                {student.name || "Unknown Student"}
+              </h1>
               <p className="text-muted-foreground">
                 Grade {student.grade} • {courses.length} courses enrolled
               </p>

@@ -25,14 +25,14 @@ import { AddChildDialog } from "@/components/children/add-child-dialog";
 
 import { useToast } from "@/hooks/use-toast";
 import type {
-  IStudent,
   IStudentStats,
   IParentStats,
   IParentDashboardProps,
-  IParent,
-} from "@/types/dashboard";
+} from "@/types/dashboard-simple";
+import type { IStudent } from "@/types/student";
+import type { IParent } from "@/types/parent";
 import type { ICourse } from "@/types/course";
-import { RelationshipType } from "@/types/dashboard";
+import { RelationshipType } from "@/types/parent";
 import type { IUser } from "@/lib/api/user";
 import type { IParent as IApiParent } from "@/lib/api/parent";
 

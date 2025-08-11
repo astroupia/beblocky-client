@@ -25,15 +25,16 @@ import {
   Sparkles,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import type { IStudent, ICourse } from "@/types/dashboard";
+import type { ICourse } from "@/types/course";
+import type { IStudentWithUserData } from "@/types/enriched-student";
 
 interface ChildrenListProps {
-  studentList: IStudent[];
+  studentList: IStudentWithUserData[];
   courses: ICourse[];
   onAddChild: () => void;
-  onEditChild: (child: IStudent) => void;
+  onEditChild: (child: IStudentWithUserData) => void;
   onDeleteChild: (childId: string) => void;
-  onManageCourses: (child: IStudent) => void;
+  onManageCourses: (child: IStudentWithUserData) => void;
 }
 
 export function ChildrenList({
@@ -49,14 +50,16 @@ export function ChildrenList({
 
   const filteredChildren = studentList.filter((child) => {
     const matchesSearch =
-      child.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      child.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      child.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      false ||
+      child.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      false;
     const matchesGrade =
       filterGrade === "all" || child.grade?.toString() === filterGrade;
     return matchesSearch && matchesGrade;
   });
 
-  const getEnrolledCoursesInfo = (child: IStudent) => {
+  const getEnrolledCoursesInfo = (child: IStudentWithUserData) => {
     const enrolledCourses = courses.filter((course) =>
       child.enrolledCourses.includes(course._id)
     );
@@ -177,7 +180,7 @@ export function ChildrenList({
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between mb-3">
                     <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-lg group-hover:scale-110 transition-transform">
-                      {child.name.charAt(0).toUpperCase()}
+                      {child.name?.charAt(0)?.toUpperCase() || "?"}
                     </div>
                     <div className="flex gap-2">
                       <Button
@@ -191,7 +194,7 @@ export function ChildrenList({
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => onDeleteChild(child._id)}
+                        onClick={() => onDeleteChild(child._id || "")}
                         className="h-8 w-8 text-destructive hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />

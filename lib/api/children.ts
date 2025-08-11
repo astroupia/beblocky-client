@@ -2,7 +2,7 @@ import type {
   IStudent,
   ICreateStudentDto,
   IUpdateStudentDto,
-} from "@/types/dashboard";
+} from "@/types/student";
 
 // API Response types
 export interface ApiResponse<T> {
@@ -16,6 +16,9 @@ export interface IAddChildDto {
   email: string;
   grade: number;
   section: string;
+  // Optional demographic fields used during student creation
+  dateOfBirth?: string; // ISO or yyyy-mm-dd
+  gender?: "male" | "female" | "other";
   emergencyContact: {
     name: string;
     relationship: string;

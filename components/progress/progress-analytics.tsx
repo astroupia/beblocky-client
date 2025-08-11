@@ -12,7 +12,8 @@ import {
   Award,
 } from "lucide-react";
 import { format, subDays } from "date-fns";
-import type { IStudent, ICourse } from "@/types/dashboard";
+import type { IStudent } from "@/types/student";
+import type { ICourse } from "@/types/course";
 
 interface ProgressAnalyticsProps {
   student: IStudent;

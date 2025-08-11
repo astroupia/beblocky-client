@@ -19,7 +19,9 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import type { IDashboardProps, ICourse, IStudent } from "@/types/dashboard";
+import type { IDashboardProps } from "@/types/dashboard-simple";
+import type { ICourse } from "@/types/course";
+import type { IStudentWithUserData } from "@/types/enriched-student";
 
 export function ModernDashboard({
   userType,
@@ -362,8 +364,10 @@ function CourseCard({ course, index }: { course: ICourse; index: number }) {
   );
 }
 
+
+
 // Student Card Component
-function StudentCard({ student, index }: { student: IStudent; index: number }) {
+function StudentCard({ student, index }: { student: IStudentWithUserData; index: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -374,12 +378,12 @@ function StudentCard({ student, index }: { student: IStudent; index: number }) {
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg group-hover:scale-110 transition-transform">
-              {student.name.charAt(0)}
+              {student.name?.charAt(0)?.toUpperCase() || "?"}
             </div>
             <Badge variant="secondary">Grade {student.grade || "N/A"}</Badge>
           </div>
-          <CardTitle className="text-lg">{student.name}</CardTitle>
-          <p className="text-sm text-muted-foreground">{student.email}</p>
+          <CardTitle className="text-lg">{student.name || "Unknown Student"}</CardTitle>
+          <p className="text-sm text-muted-foreground">{student.email || "No email"}</p>
         </CardHeader>
         <CardContent className="pt-0">
           <div className="space-y-3">

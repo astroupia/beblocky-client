@@ -8,12 +8,18 @@ import { ManageCoursesDialog } from "@/components/children/manage-courses-dialog
 import { childrenApi } from "@/lib/api/children";
 import { parentApi } from "@/lib/api/parent";
 import { courseApi } from "@/lib/api/course";
+import { userApi } from "@/lib/api/user";
 import { useToast } from "@/hooks/use-toast";
-import type { IStudent, ICourse, ICreateStudentDto } from "@/types/dashboard";
+import type { ICourse } from "@/types/course";
+import type { IStudent, ICreateStudentDto } from "@/types/student";
+import type { IStudentResponse } from "@/lib/api/student";
+
+// Extended type for API responses that include _id
+type IStudentWithId = IStudent & { _id: string };
 
 export default function ChildrenPage() {
   const { data: session } = useSession();
-  const [children, setChildren] = useState<IStudent[]>([]);
+  const [children, setChildren] = useState<IStudentWithId[]>([]);
   const [availableCourses, setAvailableCourses] = useState<ICourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -32,7 +38,7 @@ export default function ChildrenPage() {
         childrenApi.getChildrenByParent(parentData._id),
         courseApi.fetchAllCourses(),
       ]);
-      setChildren(childrenData);
+      setChildren(childrenData as IStudentWithId[]);
       setAvailableCourses(coursesData);
     } catch (error: unknown) {
       console.error("Children API Error:", error);
@@ -69,11 +75,11 @@ export default function ChildrenPage() {
   const handleAddChild = async (data: ICreateStudentDto) => {
     try {
       const newChild = await childrenApi.createChild(data);
-      setChildren([...children, newChild]);
+      setChildren([...children, newChild as IStudentWithId]);
       setAddDialogOpen(false);
       toast({
         title: "Success",
-        description: `${newChild.name} has been added successfully!`,
+        description: "Child has been added successfully!",
       });
     } catch {
       toast({
@@ -117,7 +123,9 @@ export default function ChildrenPage() {
         courseId
       );
       setChildren(
-        children.map((child) => (child._id === childId ? updatedChild : child))
+        children.map((child) =>
+          child._id === childId ? (updatedChild as IStudentWithId) : child
+        )
       );
       toast({
         title: "Success",
@@ -139,7 +147,9 @@ export default function ChildrenPage() {
         courseId
       );
       setChildren(
-        children.map((child) => (child._id === childId ? updatedChild : child))
+        children.map((child) =>
+          child._id === childId ? (updatedChild as IStudentWithId) : child
+        )
       );
       toast({
         title: "Success",

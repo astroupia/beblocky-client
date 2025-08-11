@@ -32,12 +32,13 @@ import {
   XCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import type { IStudent, ICourse } from "@/types/dashboard";
+import type { ICourse } from "@/types/course";
+import type { IStudentWithUserData } from "@/types/enriched-student";
 
 interface ManageCoursesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  child: IStudent | null;
+  child: IStudentWithUserData | null;
   availableCourses: ICourse[];
   onAddCourse: (childId: string, courseId: string) => Promise<void>;
   onRemoveCourse: (childId: string, courseId: string) => Promise<void>;
@@ -84,7 +85,7 @@ export function ManageCoursesDialog({
   const handleAddCourse = async (courseId: string) => {
     setLoading(courseId);
     try {
-      await onAddCourse(child._id, courseId);
+      await onAddCourse(child._id || "", courseId);
     } catch (error) {
       console.error("Error adding course:", error);
     } finally {
@@ -95,7 +96,7 @@ export function ManageCoursesDialog({
   const handleRemoveCourse = async (courseId: string) => {
     setLoading(courseId);
     try {
-      await onRemoveCourse(child._id, courseId);
+      await onRemoveCourse(child._id || "", courseId);
     } catch (error) {
       console.error("Error removing course:", error);
     } finally {
@@ -137,7 +138,7 @@ export function ManageCoursesDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BookOpen className="h-5 w-5" />
-            Manage Courses for {child.name}
+            Manage Courses for {child.name || "Unknown Child"}
           </DialogTitle>
         </DialogHeader>
 

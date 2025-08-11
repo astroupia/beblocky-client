@@ -13,10 +13,13 @@ import {
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { StatsCard } from "@/components/shared/stats-card";
-import type { IParentDashboardProps, IStudent } from "@/types/dashboard/index";
+import type { IParentDashboardProps } from "@/types/dashboard-simple";
+import type { IStudent } from "@/types/student";
 import { StudentCard } from "@/components/shared/student-card";
 // Import the AddChildDialog component at the top
 import { AddChildDialog } from "@/components/children/add-child-dialog";
+import { studentApi } from "@/lib/api/student";
+import { userApi } from "@/lib/api/user";
 
 export function ParentDashboard({
   parent,
@@ -25,16 +28,66 @@ export function ParentDashboard({
   selectedTab = "overview",
 }: IParentDashboardProps & { selectedTab?: "overview" | "children" }) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  type UIStudent = IStudent & { _id?: string; name?: string; email?: string };
   const [recentActivityStudents, setRecentActivityStudents] = useState<
-    IStudent[]
+    UIStudent[]
   >([]);
+  const [resolvedChildren, setResolvedChildren] = useState<UIStudent[]>(
+    children as unknown as UIStudent[]
+  );
 
   // Set recent activity students from children data
   useEffect(() => {
     if (children.length > 0) {
-      const recentChildren = children.slice(0, 3); // Get first 3 children
+      const recentChildren = children.slice(0, 3);
       setRecentActivityStudents(recentChildren);
     }
+  }, [children]);
+
+  const refreshChildren = async () => {
+    try {
+      // Attempt to resolve child data with user info for display fields
+      const enriched: UIStudent[] = [];
+      for (const raw of children as unknown as UIStudent[]) {
+        const studentId =
+          (raw as any)?._id ?? (raw as any)?.id ?? (raw as any)?.studentId;
+        if (!studentId) {
+          enriched.push(raw);
+          continue;
+        }
+        const student = await studentApi.getStudent(studentId as string);
+        let name: string | undefined;
+        let email: string | undefined;
+        if (student.userId) {
+          try {
+            const user = await userApi.getUserById(student.userId);
+            name = user.name;
+            email = user.email;
+          } catch (e) {
+            // ignore missing user
+          }
+        }
+        enriched.push({
+          ...(raw as Partial<UIStudent>),
+          ...(student as unknown as Partial<UIStudent>),
+          _id: ((raw as any)?._id ?? (student as any)?._id) as string,
+          name,
+          email,
+        } as UIStudent);
+      }
+      setResolvedChildren(enriched);
+      setRecentActivityStudents(enriched.slice(0, 3));
+    } catch (e) {
+      // fallback to original children
+      const fallback = children as unknown as UIStudent[];
+      setResolvedChildren(fallback);
+      setRecentActivityStudents(fallback.slice(0, 3));
+    }
+  };
+
+  useEffect(() => {
+    refreshChildren();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [children]);
 
   const containerVariants = {
@@ -152,7 +205,11 @@ export function ParentDashboard({
                 <div className="space-y-4">
                   {recentActivityStudents.map((child, index) => (
                     <motion.div
-                      key={child._id}
+                      key={
+                        (child._id as string) ||
+                        (child as any).id ||
+                        `recent-${index}`
+                      }
                       className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -266,10 +323,14 @@ export function ParentDashboard({
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {children.map((child, index) => (
+                {resolvedChildren.map((child, index) => (
                   <StudentCard
-                    key={child._id}
-                    student={child}
+                    key={
+                      (child._id as string) ||
+                      (child as any).id ||
+                      `child-${index}`
+                    }
+                    student={child as unknown as IStudent}
                     index={index}
                     showDetailedStats={true}
                   />
@@ -284,6 +345,7 @@ export function ParentDashboard({
           open={addDialogOpen}
           onOpenChange={setAddDialogOpen}
           parentId={parent?._id}
+          onSuccess={refreshChildren}
         />
       </div>
     </div>
