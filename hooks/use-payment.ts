@@ -63,6 +63,13 @@ export function usePayment(options: UsePaymentOptions = {}) {
       console.log("🔍 [Payment API] Sending ARIFPAY payload:", paymentData);
       const response = await paymentApi.createArifPayPayment(paymentData);
 
+      console.log("🔍 [Payment Hook] ArifPay response:", response);
+
+      // Check if response is valid
+      if (!response || !response.sessionId || !response.paymentUrl) {
+        throw new Error("Invalid response from ArifPay API");
+      }
+
       // Store payment session info for later use
       localStorage.setItem(
         "payment_session",
@@ -77,6 +84,12 @@ export function usePayment(options: UsePaymentOptions = {}) {
       );
 
       options.onSuccess?.(response);
+
+      // Redirect to ArifPay checkout
+      if (response.paymentUrl) {
+        window.location.href = response.paymentUrl;
+      }
+
       return response;
     } catch (err) {
       const errorMessage =
