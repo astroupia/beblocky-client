@@ -20,8 +20,9 @@ import { useSubscription } from "@/hooks/use-subscription";
 import {
   PaymentMethodSelector,
   PaymentProvider,
+  type StripePaymentData,
+  type ArifPayPaymentData,
 } from "@/components/payment/payment-method-selector";
-import { ArifPayPaymentData } from "@/lib/api/payment";
 import { useToast } from "@/hooks/use-toast";
 import { SubscriptionPlan } from "@/types/subscription";
 import { useSession } from "@/lib/auth-client";
@@ -225,7 +226,7 @@ export default function UpgradePage() {
 
   const handlePaymentMethodSelect = async (
     provider: PaymentProvider,
-    paymentData?: ArifPayPaymentData
+    paymentData?: ArifPayPaymentData | StripePaymentData
   ) => {
     if (!selectedPlan || selectedPlan === "free") {
       toast({

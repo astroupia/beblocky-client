@@ -40,7 +40,7 @@ interface PaymentMethodSelectorProps {
   amount: number;
 }
 
-interface StripePaymentData {
+export interface StripePaymentData {
   phoneNumber: string;
   userId: string;
   amount: number;
@@ -49,7 +49,7 @@ interface StripePaymentData {
   email?: string;
 }
 
-interface ArifPayPaymentData {
+export interface ArifPayPaymentData {
   phoneNumber: string;
   userId: string;
   amount: number;
@@ -156,42 +156,30 @@ export function PaymentMethodSelector({
       selectedProvider
     );
 
-    if (selectedProvider === PaymentProvider.ARIFPAY) {
-      const cleanPhone = phoneNumber.replace(/\s+/g, "");
-      if (!cleanPhone.trim()) {
-        setPhoneError("Phone number is required for local payment");
-        return;
-      }
-      if (!validatePhoneNumber(cleanPhone, false)) {
+    try {
+      setIsProcessing(true);
+      setPhoneError("");
+
+      if (!userId || !amount || !planName || !billingCycle) {
         setPhoneError(
-          "Please enter a valid Ethiopian phone number (format: 251912345678)"
+          "Missing required payment information. Please try again."
         );
         return;
       }
-    } else if (selectedProvider === PaymentProvider.STRIPE) {
+
       const cleanPhone = phoneNumber.replace(/\s+/g, "");
-      if (!cleanPhone.trim()) {
-        setPhoneError("Phone number is required for payment verification");
-        return;
-      }
-      if (!validatePhoneNumber(cleanPhone, true)) {
-        setPhoneError("Please enter a valid phone number with country code");
-        return;
-      }
 
-      try {
-        setIsProcessing(true);
-        setPhoneError("");
-
-        if (!userId || !amount || !planName || !billingCycle) {
+      if (selectedProvider === PaymentProvider.ARIFPAY) {
+        if (!cleanPhone.trim()) {
+          setPhoneError("Phone number is required for local payment");
+          return;
+        }
+        if (!validatePhoneNumber(cleanPhone, false)) {
           setPhoneError(
-            "Missing required payment information. Please try again."
+            "Please enter a valid Ethiopian phone number (format: 251912345678)"
           );
           return;
         }
-
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         const arifPayData: ArifPayPaymentData = {
           phoneNumber: cleanPhone,
@@ -202,43 +190,22 @@ export function PaymentMethodSelector({
           email: userEmail,
         };
         console.log("🧭 [Payment] Submitting ARIFPAY payload:", arifPayData);
-        // Call onSelect with data only ONCE during continue for ARIFPAY
         onSelect(selectedProvider, arifPayData);
 
         if (onPaymentInitiated) {
           onPaymentInitiated("https://payment.example.com/checkout");
         }
-      } catch (error) {
-        setPhoneError("Failed to initiate payment. Please try again.");
-      } finally {
-        setIsProcessing(false);
-      }
-    } else if (selectedProvider === PaymentProvider.STRIPE) {
-      const cleanPhone = phoneNumber.replace(/\s+/g, "");
-      if (!cleanPhone.trim()) {
-        setPhoneError("Phone number is required for payment verification");
-        return;
-      }
-      if (!validatePhoneNumber(cleanPhone, true)) {
-        setPhoneError("Please enter a valid phone number with country code");
-        return;
-      }
-
-      try {
-        setIsProcessing(true);
-        setPhoneError("");
-
-        if (!userId || !amount || !planName || !billingCycle) {
-          setPhoneError(
-            "Missing required payment information. Please try again."
-          );
+      } else if (selectedProvider === PaymentProvider.STRIPE) {
+        if (!cleanPhone.trim()) {
+          setPhoneError("Phone number is required for payment verification");
+          return;
+        }
+        if (!validatePhoneNumber(cleanPhone, true)) {
+          setPhoneError("Please enter a valid phone number with country code");
           return;
         }
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        const stripeData = {
+        const stripeData: StripePaymentData = {
           phoneNumber: cleanPhone,
           userId,
           amount,
@@ -248,17 +215,17 @@ export function PaymentMethodSelector({
         };
 
         console.log("🧭 [Payment] Submitting STRIPE payload:", stripeData);
-        // For Stripe, call onSelect with provider and phone data
         onSelect(selectedProvider, stripeData);
 
         if (onPaymentInitiated) {
           onPaymentInitiated("https://stripe.example.com/checkout");
         }
-      } catch (error) {
-        setPhoneError("Failed to initiate payment. Please try again.");
-      } finally {
-        setIsProcessing(false);
       }
+    } catch (error) {
+      console.error("🧭 [Payment] Error during payment initiation:", error);
+      setPhoneError("Failed to initiate payment. Please try again.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 

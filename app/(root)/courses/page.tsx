@@ -601,7 +601,7 @@ export default function CoursesPage() {
                               <CardTitle className="text-xl font-bold">
                                 {config.name}
                               </CardTitle>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="hidden sm:block text-sm text-muted-foreground">
                                 {config.description}
                               </p>
                             </div>
