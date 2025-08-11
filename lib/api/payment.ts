@@ -54,9 +54,20 @@ export interface PaymentRequest {
 
 export interface PaymentResponse {
   sessionId: string;
-  transactionId: string;
+  transactionId?: string;
   paymentUrl: string;
-  cancelUrl: string;
+  cancelUrl?: string;
+}
+
+// ArifPay specific response structure
+export interface ArifPayApiResponse {
+  error: boolean;
+  msg: string;
+  data: {
+    sessionId: string;
+    paymentUrl: string;
+    cancelUrl?: string;
+  };
 }
 
 export interface PaymentDocument {
@@ -189,6 +200,22 @@ export class PaymentApi {
       ) {
         console.log("✅ [Payment API] Response has ApiResponse structure");
         return data as ApiResponse<T>;
+      }
+
+      // If the response has ArifPay structure (error, msg, data), extract the data
+      if (
+        data &&
+        typeof data === "object" &&
+        "error" in data &&
+        "msg" in data &&
+        "data" in data
+      ) {
+        console.log("✅ [Payment API] Response has ArifPay structure");
+        return {
+          data: data.data as T,
+          success: !data.error,
+          message: data.msg,
+        } as ApiResponse<T>;
       }
 
       // If the response is the data directly (like Stripe response), wrap it
