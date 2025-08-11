@@ -54,6 +54,7 @@ import { studentApi } from "@/lib/api/student";
 import { progressApi } from "@/lib/api/progress";
 import { courseApi } from "@/lib/api/course";
 import { toast } from "sonner";
+import { encryptEmail } from "@/lib/utils";
 
 export default function CoursesPage() {
   const { data: session, isPending: sessionLoading } = useSession();
@@ -78,6 +79,10 @@ export default function CoursesPage() {
     {}
   );
   const [userRole, setUserRole] = useState<string>("student");
+  const [studentId, setStudentId] = useState<string | null>(null);
+  const [enrollmentMap, setEnrollmentMap] = useState<Record<string, boolean>>(
+    {}
+  );
 
   // Determine user type based on role
   const userType: "student" | "parent" =
@@ -262,6 +267,19 @@ export default function CoursesPage() {
       try {
         const userData = await userApi.getUserById(session.user.id);
         setUserRole(userData.role || "student");
+        // Resolve student id for enrollment checks (only for students)
+        if (userData.role === "student") {
+          try {
+            const student = await studentApi.getStudentByUserId(
+              session.user.id
+            );
+            setStudentId(student._id);
+          } catch {
+            setStudentId(null);
+          }
+        } else {
+          setStudentId(null);
+        }
       } catch (error) {
         console.error("Failed to fetch user role:", error);
         setUserRole("student");
@@ -310,17 +328,70 @@ export default function CoursesPage() {
     fetchCourseData();
   }, [activeCourses]);
 
+  // Resolve per-course enrollment status using silent progress check
+  useEffect(() => {
+    const resolveEnrollment = async () => {
+      if (!studentId || !activeCourses || activeCourses.length === 0) return;
+      const entries = await Promise.all(
+        activeCourses.map(async (course) => {
+          try {
+            const progress = await progressApi.getStudentCourseProgressSilently(
+              studentId,
+              course._id
+            );
+            return [course._id, !!progress] as const;
+          } catch {
+            return [course._id, false] as const;
+          }
+        })
+      );
+      const map: Record<string, boolean> = {};
+      for (const [id, enrolled] of entries) map[id] = enrolled;
+      setEnrollmentMap(map);
+    };
+    resolveEnrollment();
+  }, [studentId, activeCourses]);
+
   const handleCourseClick = (course: ICourse) => {
     setSelectedCourse(course);
     setIsDialogOpen(true);
   };
 
-  const handleEnroll = (courseId: string) => {
+  const openIdeForCourse = (courseId: string) => {
+    if (!session?.user?.email) return;
+    const encryptedEmail = encryptEmail(session.user.email);
+    const courseUrl = `https://ide.beblocky.com/courses/${courseId}/learn/user/${encryptedEmail}`;
+    window.open(courseUrl, "_blank");
+  };
+
+  const handleEnroll = async (courseId: string) => {
     const course = activeCourses.find((c) => c._id === courseId);
-    if (course) {
-      setEnrollmentCourse(course);
-      setIsEnrollmentDialogOpen(true);
+    if (!course) return;
+
+    // If we already know it's enrolled, go straight to IDE
+    if (enrollmentMap[courseId]) {
+      openIdeForCourse(courseId);
+      return;
     }
+
+    // Double check silently in case the map hasn't resolved yet
+    if (studentId) {
+      try {
+        const progress = await progressApi.getStudentCourseProgressSilently(
+          studentId,
+          courseId
+        );
+        if (progress) {
+          setEnrollmentMap((prev) => ({ ...prev, [courseId]: true }));
+          openIdeForCourse(courseId);
+          return;
+        }
+      } catch {}
+    }
+
+    // Not enrolled yet – open enrollment dialog
+    setEnrollmentCourse(course);
+    setIsEnrollmentDialogOpen(true);
   };
 
   const handleAddToPlan = (courseId: string) => {
@@ -682,7 +753,7 @@ export default function CoursesPage() {
                                                     </Button>
                                                   ) : null;
                                                 })()
-                                              : // Student logic: Show Enroll if course is accessible and not already enrolled
+                                              : // Student logic: show Enrolled if progress exists, otherwise Enroll if accessible
                                                 (() => {
                                                   const userPlan =
                                                     subscription?.planName ||
@@ -693,12 +764,20 @@ export default function CoursesPage() {
                                                       course.subType
                                                     );
                                                   const isEnrolled =
-                                                    course.students?.includes(
-                                                      session?.user?.id || ""
-                                                    );
+                                                    !!enrollmentMap[course._id];
 
-                                                  return canAccess &&
-                                                    !isEnrolled ? (
+                                                  if (isEnrolled) {
+                                                    return (
+                                                      <Badge
+                                                        variant="secondary"
+                                                        className="px-3 py-1"
+                                                      >
+                                                        Enrolled
+                                                      </Badge>
+                                                    );
+                                                  }
+
+                                                  return canAccess ? (
                                                     <Button
                                                       size="sm"
                                                       variant="outline"
@@ -844,7 +923,12 @@ export default function CoursesPage() {
           setEnrollmentCourse(null);
         }}
         onEnrollmentSuccess={() => {
-          // Refresh courses or update UI as needed
+          if (enrollmentCourse) {
+            setEnrollmentMap((prev) => ({
+              ...prev,
+              [enrollmentCourse._id]: true,
+            }));
+          }
         }}
       />
     </div>

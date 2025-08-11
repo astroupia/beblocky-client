@@ -3,7 +3,7 @@ import type {
   IStudentProgress,
   IProgressResponse,
   IChildProgressSummary,
-} from "@/types/dashboard";
+} from "@/types/dashboard-simple";
 
 // API Response types
 export interface ApiResponse<T> {
@@ -15,13 +15,17 @@ export interface ApiResponse<T> {
 // Simple API client for progress operations
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
+type RequestOptions = RequestInit & { suppressErrors?: boolean };
+
 async function simpleFetch<T>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestOptions
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
-  console.log("🌐 [Progress API] Making request to:", url);
+  if (!options?.suppressErrors) {
+    console.log("🌐 [Progress API] Making request to:", url);
+  }
 
   try {
     const response = await fetch(url, {
@@ -32,19 +36,27 @@ async function simpleFetch<T>(
       ...options,
     });
 
-    console.log("🌐 [Progress API] Response status:", response.status);
+    if (!options?.suppressErrors) {
+      console.log("🌐 [Progress API] Response status:", response.status);
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("❌ [Progress API] Error Response:", errorText);
+      if (!options?.suppressErrors) {
+        console.error("❌ [Progress API] Error Response:", errorText);
+      }
       throw new Error(`API Error: ${response.status} - ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log("✅ [Progress API] Success Response:", data);
+    if (!options?.suppressErrors) {
+      console.log("✅ [Progress API] Success Response:", data);
+    }
     return data;
   } catch (error) {
-    console.error("❌ [Progress API] Request failed:", error);
+    if (!options?.suppressErrors) {
+      console.error("❌ [Progress API] Request failed:", error);
+    }
     throw error;
   }
 }
@@ -52,26 +64,32 @@ async function simpleFetch<T>(
 export class ProgressApi {
   private static async request<T>(
     endpoint: string,
-    options?: RequestInit
+    options?: RequestOptions
   ): Promise<ApiResponse<T>> {
     try {
-      const data = await simpleFetch<ApiResponse<T>>(endpoint, options);
+      const raw = await simpleFetch<unknown>(endpoint, options);
 
-      // If the response is already an array, wrap it in the expected format
-      if (Array.isArray(data)) {
-        console.log(
-          "✅ [Progress API] Wrapping array response in expected format"
-        );
-        return {
-          data: data as T,
-          success: true,
-          message: "Progress data fetched successfully",
-        } as ApiResponse<T>;
+      // If backend already returns ApiResponse shape, use it
+      if (
+        raw &&
+        typeof raw === "object" &&
+        "data" in (raw as any) &&
+        ("success" in (raw as any) || "message" in (raw as any))
+      ) {
+        return raw as ApiResponse<T>;
       }
 
-      return data;
+      // If array or plain object, wrap into ApiResponse<T>
+      const wrapped: ApiResponse<T> = {
+        data: raw as T,
+        success: true,
+        message: "OK",
+      };
+      return wrapped;
     } catch (error) {
-      console.error("❌ [Progress API] Request failed:", error);
+      if (!options?.suppressErrors) {
+        console.error("❌ [Progress API] Request failed:", error);
+      }
       throw error;
     }
   }
@@ -90,12 +108,28 @@ export class ProgressApi {
     studentId: string,
     courseId: string
   ): Promise<ApiResponse<IProgressResponse>> {
+    // Align with backend route: /progress/:studentId/:courseId
     return this.request<IProgressResponse>(
-      `/progress/student/${studentId}/course/${courseId}`,
+      `/progress/${studentId}/${courseId}`,
       {
         method: "GET",
       }
     );
+  }
+
+  // Silent variant that does not log 404s and returns null when not found
+  static async getStudentCourseProgressSilently(
+    studentId: string,
+    courseId: string
+  ): Promise<ApiResponse<IProgressResponse> | null> {
+    try {
+      return await this.request<IProgressResponse>(
+        `/progress/${studentId}/${courseId}`,
+        { method: "GET", suppressErrors: true }
+      );
+    } catch {
+      return null;
+    }
   }
 
   // POST /progress - Create new progress entry
@@ -105,6 +139,17 @@ export class ProgressApi {
     return this.request<IProgress>("/progress", {
       method: "POST",
       body: JSON.stringify(progressData),
+    });
+  }
+
+  // Convenience helper: create minimal progress with required fields only
+  static async createMinimalProgress(
+    studentId: string,
+    courseId: string
+  ): Promise<ApiResponse<IProgress>> {
+    return this.request<IProgress>("/progress", {
+      method: "POST",
+      body: JSON.stringify({ studentId, courseId }),
     });
   }
 
@@ -195,8 +240,30 @@ export const progressApi = {
     return response.data;
   },
 
+  async getStudentCourseProgressSilently(
+    studentId: string,
+    courseId: string
+  ): Promise<IProgressResponse | null> {
+    const response = await ProgressApi.getStudentCourseProgressSilently(
+      studentId,
+      courseId
+    );
+    return response ? response.data : null;
+  },
+
   async createProgress(progressData: Partial<IProgress>): Promise<IProgress> {
     const response = await ProgressApi.createProgress(progressData);
+    return response.data;
+  },
+
+  async createMinimalProgress(
+    studentId: string,
+    courseId: string
+  ): Promise<IProgress> {
+    const response = await ProgressApi.createMinimalProgress(
+      studentId,
+      courseId
+    );
     return response.data;
   },
 

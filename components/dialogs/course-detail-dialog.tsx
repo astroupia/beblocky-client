@@ -39,6 +39,8 @@ import { canAccessCourse } from "@/lib/utils/subscription-hierarchy";
 import { formatDate } from "@/lib/utils";
 import { courseApi } from "@/lib/api/course";
 import { lessonApi } from "@/lib/api/lesson";
+import { progressApi } from "@/lib/api/progress";
+import { studentApi } from "@/lib/api/student";
 import { useSession } from "@/lib/auth-client";
 
 interface CourseDetailsDialogProps {
@@ -70,6 +72,7 @@ export function CourseDetailsDialog({
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [totalHours, setTotalHours] = useState(2);
   const [studentsCount, setStudentsCount] = useState(0);
+  const [isEnrolled, setIsEnrolled] = useState(false);
 
   // Get user ID from session
   const { data: session } = useSession();
@@ -112,6 +115,30 @@ export function CourseDetailsDialog({
       : 0;
     setStudentsCount(count);
   }, [course]);
+
+  // Check enrollment status for students
+  useEffect(() => {
+    const checkEnrollment = async () => {
+      if (!course || !session?.user?.id || userType !== "student") {
+        setIsEnrolled(false);
+        return;
+      }
+
+      try {
+        const student = await studentApi.getStudentByUserId(session.user.id);
+        const progress = await progressApi.getStudentCourseProgressSilently(
+          student._id,
+          course._id
+        );
+        setIsEnrolled(!!progress);
+      } catch (error) {
+        console.warn("Failed to check enrollment status:", error);
+        setIsEnrolled(false);
+      }
+    };
+
+    checkEnrollment();
+  }, [course, session?.user?.id, userType]);
 
   const loadReviews = useCallback(async () => {
     if (!course) return;
@@ -257,8 +284,8 @@ export function CourseDetailsDialog({
     course.courseLanguage === "HTML"
       ? "Beginner"
       : course.courseLanguage === "Python"
-      ? "Intermediate"
-      : "Advanced";
+        ? "Intermediate"
+        : "Advanced";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -599,11 +626,16 @@ export function CourseDetailsDialog({
             {userType === "student" ? (
               <Button
                 onClick={handleAction}
-                disabled={isLoading}
+                disabled={isLoading || isEnrolled}
                 className="flex-1 gap-2"
               >
                 {isLoading ? (
                   "Enrolling..."
+                ) : isEnrolled ? (
+                  <>
+                    <CheckCircle className="h-4 w-4" />
+                    Already Enrolled
+                  </>
                 ) : (
                   <>
                     <Play className="h-4 w-4" />

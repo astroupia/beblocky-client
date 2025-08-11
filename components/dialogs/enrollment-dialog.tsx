@@ -45,36 +45,22 @@ export function EnrollmentDialog({
       // Get student record
       const student = await studentApi.getStudentByUserId(session.user.id);
 
-      // Check if progress already exists
-      try {
-        const existingProgress = await progressApi.getStudentCourseProgress(
-          student._id,
-          course._id
-        );
-
-        if (existingProgress && existingProgress.percentage > 0) {
-          // Progress exists, navigate to IDE
-          if (session?.user?.email) {
-            const encryptedEmail = encryptEmail(session.user.email);
-            const courseUrl = `https://ide.beblocky.com/courses/${course._id}/learn/user/${encryptedEmail}`;
-            window.open(courseUrl, "_blank");
-          }
-          onClose();
-          return;
+      // Gracefully check for existing progress; if not found, proceed without throwing
+      const existing = await progressApi
+        .getStudentCourseProgressSilently(student._id, course._id)
+        .catch(() => null);
+      if (existing) {
+        if (session?.user?.email) {
+          const encryptedEmail = encryptEmail(session.user.email);
+          const courseUrl = `https://ide.beblocky.com/courses/${course._id}/learn/user/${encryptedEmail}`;
+          window.open(courseUrl, "_blank");
         }
-      } catch (error) {
-        // Progress doesn't exist, continue with enrollment
-        console.log("No existing progress found, proceeding with enrollment");
+        onClose();
+        return;
       }
 
-      // Create progress entry - only send required fields
-      await progressApi.createProgress({
-        studentId: student._id,
-        courseId: course._id,
-        lessonId: "",
-        completed: false,
-        timeSpent: 0,
-      });
+      // Create minimal progress entry (only required fields)
+      await progressApi.createMinimalProgress(student._id, course._id);
 
       // Update course to add student to students array
       const currentStudents = Array.isArray((course as any).students)

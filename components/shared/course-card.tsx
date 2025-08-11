@@ -77,12 +77,12 @@ export function CourseCard({
         const student = await studentApi.getStudentByUserId(session.user.id);
         setStudentId(student._id);
 
-        // Check if student has progress for this course
-        const progress = await progressApi.getStudentCourseProgress(
+        // Check if student has progress for this course (silent + treat any progress as enrolled)
+        const progress = await progressApi.getStudentCourseProgressSilently(
           student._id,
           course._id
         );
-        setIsEnrolled(progress && progress.percentage > 0);
+        setIsEnrolled(!!progress);
       } catch (error) {
         console.warn("Failed to check enrollment status:", error);
         setIsEnrolled(false);
