@@ -24,8 +24,10 @@ import {
   Target,
 } from "lucide-react";
 import type { IUser } from "@/lib/api/user";
+import type { IStudentResponse } from "@/lib/api/student";
 import { userApi } from "@/lib/api/user";
 import { studentApi } from "@/lib/api/student";
+import { useEffect } from "react";
 
 interface StudentProfileFormProps {
   userData: IUser;
@@ -34,13 +36,13 @@ interface StudentProfileFormProps {
 export function StudentProfileForm({ userData }: StudentProfileFormProps) {
   const [userLoading, setUserLoading] = useState(false);
   const [studentLoading, setStudentLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [userForm, setUserForm] = useState({
     name: userData.name || "",
     email: userData.email || "",
   });
   const [studentForm, setStudentForm] = useState({
     grade: "",
-    section: "",
     dateOfBirth: "",
     gender: "",
     emergencyContact: {
@@ -49,6 +51,33 @@ export function StudentProfileForm({ userData }: StudentProfileFormProps) {
       phone: "",
     },
   });
+
+  // Load existing student data
+  useEffect(() => {
+    const loadStudentData = async () => {
+      try {
+        const studentData = await studentApi.getStudentByUserId(userData._id);
+
+        setStudentForm({
+          grade: studentData.grade?.toString() || "",
+          dateOfBirth: studentData.dateOfBirth || "",
+          gender: studentData.gender || "",
+          emergencyContact: {
+            name: studentData.emergencyContact?.name || "",
+            relationship: studentData.emergencyContact?.relationship || "",
+            phone: studentData.emergencyContact?.phone || "",
+          },
+        });
+      } catch (error) {
+        console.warn("Failed to load student data:", error);
+        // Keep default empty values if no student data exists
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    loadStudentData();
+  }, [userData._id]);
 
   const handleUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +102,6 @@ export function StudentProfileForm({ userData }: StudentProfileFormProps) {
       // Validate required fields for student
       const requiredFields = {
         grade: studentForm.grade,
-        section: studentForm.section,
         dateOfBirth: studentForm.dateOfBirth,
         gender: studentForm.gender,
         "emergencyContact.name": studentForm.emergencyContact.name,
@@ -114,9 +142,10 @@ export function StudentProfileForm({ userData }: StudentProfileFormProps) {
       const studentData = await studentApi.getStudentByUserId(userData._id);
       // Update student information using the student API
       await studentApi.updateStudent(studentData._id, {
-        ...studentForm,
         grade: parseInt(studentForm.grade) || 0,
         gender: studentForm.gender as "male" | "female" | "other" | undefined,
+        dateOfBirth: studentForm.dateOfBirth,
+        emergencyContact: studentForm.emergencyContact,
       });
       toast.success("Student information updated successfully!");
     } catch (error) {
@@ -126,6 +155,23 @@ export function StudentProfileForm({ userData }: StudentProfileFormProps) {
       setStudentLoading(false);
     }
   };
+
+  if (isLoadingData) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">
+                Loading student information...
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -195,7 +241,7 @@ export function StudentProfileForm({ userData }: StudentProfileFormProps) {
                 <Target className="h-4 w-4" />
                 Academic Details
               </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="grade">
                     Grade Level <span className="text-red-500">*</span>
@@ -219,22 +265,6 @@ export function StudentProfileForm({ userData }: StudentProfileFormProps) {
                       )}
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="section">
-                    Section <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="section"
-                    value={studentForm.section}
-                    onChange={(e) =>
-                      setStudentForm({
-                        ...studentForm,
-                        section: e.target.value,
-                      })
-                    }
-                    placeholder="e.g., A, B, C"
-                  />
                 </div>
               </div>
             </div>

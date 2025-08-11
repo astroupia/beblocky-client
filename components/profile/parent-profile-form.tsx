@@ -16,8 +16,10 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { User, Users, Phone, MapPin, Heart } from "lucide-react";
 import type { IUser } from "@/lib/api/user";
+import type { IParent } from "@/lib/api/parent";
 import { userApi } from "@/lib/api/user";
 import { parentApi } from "@/lib/api/parent";
+import { useEffect } from "react";
 
 interface ParentProfileFormProps {
   userData: IUser;
@@ -26,6 +28,7 @@ interface ParentProfileFormProps {
 export function ParentProfileForm({ userData }: ParentProfileFormProps) {
   const [userLoading, setUserLoading] = useState(false);
   const [parentLoading, setParentLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [userForm, setUserForm] = useState({
     name: userData.name || "",
     email: userData.email || "",
@@ -39,6 +42,32 @@ export function ParentProfileForm({ userData }: ParentProfileFormProps) {
       country: "",
     },
   });
+
+  // Load existing parent data
+  useEffect(() => {
+    const loadParentData = async () => {
+      try {
+        const parentData = await parentApi.getParentByUserId(userData._id);
+
+        setParentForm({
+          relationship: parentData.relationship || "",
+          phoneNumber: parentData.phoneNumber || "",
+          address: {
+            subCity: parentData.address?.subCity || "",
+            city: parentData.address?.city || "",
+            country: parentData.address?.country || "",
+          },
+        });
+      } catch (error) {
+        console.warn("Failed to load parent data:", error);
+        // Keep default empty values if no parent data exists
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    loadParentData();
+  }, [userData._id]);
 
   const handleUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +130,23 @@ export function ParentProfileForm({ userData }: ParentProfileFormProps) {
       setParentLoading(false);
     }
   };
+
+  if (isLoadingData) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">
+                Loading parent information...
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
