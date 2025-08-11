@@ -30,6 +30,11 @@ import { CurrencyStudentSelector } from "@/components/upgrade/currency-student-s
 import { PricingPlans } from "@/components/upgrade/pricing-plans";
 import { SchoolPlan } from "@/components/upgrade/school-plan";
 import { FAQSection } from "@/components/upgrade/faq-section";
+import {
+  StripePlan,
+  StripeBillingCycle,
+  getStripePriceId as getStripePriceIdTyped,
+} from "@/types/stripe-pricing";
 
 interface PricingPlan {
   id: string;
@@ -62,7 +67,6 @@ const pricingPlans: PricingPlan[] = [
     icon: <Sparkles className="h-6 w-6" />,
     gradient:
       "from-gray-50 to-gray-100 dark:from-gray-950/50 dark:to-gray-900/50",
-    note: "Similar to Scratch / Blockly / intro levels",
   },
   {
     id: "starter",
@@ -81,7 +85,6 @@ const pricingPlans: PricingPlan[] = [
     icon: <Smartphone className="h-6 w-6" />,
     gradient:
       "from-blue-50 to-blue-100 dark:from-blue-950/50 dark:to-blue-900/50",
-    note: "Competes directly with Kodable, codeSpark",
   },
   {
     id: "builder",
@@ -102,7 +105,6 @@ const pricingPlans: PricingPlan[] = [
     icon: <Globe className="h-6 w-6" />,
     gradient:
       "from-green-50 to-green-100 dark:from-green-950/50 dark:to-green-900/50",
-    note: "Competes with Tynker, CodeCombat, etc.",
   },
   {
     id: "pro",
@@ -122,7 +124,6 @@ const pricingPlans: PricingPlan[] = [
     icon: <Crown className="h-6 w-6" />,
     gradient:
       "from-purple-50 to-purple-100 dark:from-purple-950/50 dark:to-purple-900/50",
-    note: "Bundle encourages upsell; undercuts Tynker Premium",
   },
 ];
 
@@ -249,13 +250,20 @@ export default function UpgradePage() {
           "Plan",
           amount,
           paymentData!.phoneNumber,
-          false
+          false,
+          selectedCurrency
         );
         // Close the dialog after successful payment initiation
         setShowPaymentSelector(false);
       } else if (provider === "stripe") {
         const priceId = getStripePriceId(selectedPlan, false);
-        await createStripePayment(selectedPlan, "Plan", priceId, false);
+        await createStripePayment(
+          selectedPlan,
+          "Plan",
+          priceId,
+          false,
+          paymentData?.phoneNumber
+        );
         // Close the dialog after successful payment initiation
         setShowPaymentSelector(false);
       }
@@ -270,46 +278,41 @@ export default function UpgradePage() {
   };
 
   const getStripePriceId = (planId: string, isAnnual: boolean): string => {
-    // This would be replaced with actual Stripe price IDs
-    const priceIds: Record<string, { monthly: string; annual: string }> = {
-      starter: {
-        monthly: "price_starter_monthly",
-        annual: "price_starter_annual",
-      },
-      builder: {
-        monthly: "price_builder_monthly",
-        annual: "price_builder_annual",
-      },
-      pro: {
-        monthly: "price_pro_monthly",
-        annual: "price_pro_annual",
-      },
+    // Map plan IDs to StripePlan enum values
+    const planMap: Record<string, StripePlan> = {
+      starter: StripePlan.STARTER,
+      builder: StripePlan.BUILDER,
+      pro: StripePlan.PRO_BUNDLE,
     };
 
-    const plan = priceIds[planId];
-    if (!plan) {
+    const stripePlan = planMap[planId];
+    if (!stripePlan) {
       throw new Error(`Invalid plan ID: ${planId}`);
     }
 
-    return isAnnual ? plan.annual : plan.monthly;
+    const billingCycle = isAnnual
+      ? StripeBillingCycle.ANNUAL
+      : StripeBillingCycle.MONTHLY;
+
+    return getStripePriceIdTyped(stripePlan, billingCycle);
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
       {/* Header */}
       <motion.div
-        className="bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 border-b border-border rounded-lg p-6 mb-8"
+        className="bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 border-b border-border rounded-lg p-4 sm:p-6 mb-6 sm:mb-8"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="text-center md:text-right">
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent flex items-center gap-3 justify-center">
-              <Crown className="h-8 w-8 text-primary" />
+        <div className="flex flex-col items-center text-center gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent flex items-center gap-2 sm:gap-3 justify-center">
+              <Crown className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
               Choose Your Plan
             </h1>
-            <p className="text-muted-foreground mt-2 max-w-2xl">
+            <p className="text-sm sm:text-base text-muted-foreground mt-2 max-w-2xl mx-auto">
               Unlock the full potential of coding education for your children
             </p>
           </div>
@@ -335,6 +338,7 @@ export default function UpgradePage() {
         getPrice={getPrice}
         getPeriod={getPeriod}
         onChoosePlan={handleChoosePlan}
+        currentUserPlan={hasActiveSubscription() ? "builder" : "free"} // TODO: Get actual current plan
       />
 
       {/* School Plan */}

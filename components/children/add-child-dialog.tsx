@@ -40,14 +40,8 @@ export function AddChildDialog({
   const [formData, setFormData] = useState<IAddChildDto>({
     email: "",
     grade: 1,
-    section: "",
     dateOfBirth: "",
     gender: undefined,
-    emergencyContact: {
-      name: "",
-      relationship: "",
-      phone: "",
-    },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,13 +53,7 @@ export function AddChildDialog({
     }
 
     // Validate required fields
-    if (
-      !formData.email ||
-      !formData.section ||
-      !formData.emergencyContact.name ||
-      !formData.emergencyContact.relationship ||
-      !formData.emergencyContact.phone
-    ) {
+    if (!formData.email) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -88,14 +76,8 @@ export function AddChildDialog({
       setFormData({
         email: "",
         grade: 1,
-        section: "",
         dateOfBirth: "",
         gender: undefined,
-        emergencyContact: {
-          name: "",
-          relationship: "",
-          phone: "",
-        },
       });
     } catch (error) {
       console.error("Failed to add child:", error);
@@ -137,7 +119,7 @@ export function AddChildDialog({
           {/* Step 1: Basic Information */}
           <div className="space-y-4">
             <h3 className="font-medium text-sm text-muted-foreground">
-              Step 1: Child Information
+              Child Information
             </h3>
 
             <div className="space-y-2">
@@ -154,44 +136,27 @@ export function AddChildDialog({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="grade">
-                  Grade Level <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={formData.grade.toString()}
-                  onValueChange={(value) =>
-                    handleInputChange("grade", parseInt(value))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select grade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(
-                      (grade) => (
-                        <SelectItem key={grade} value={grade.toString()}>
-                          Grade {grade}
-                        </SelectItem>
-                      )
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="section">
-                  Section <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="section"
-                  placeholder="A, B, C..."
-                  value={formData.section}
-                  onChange={(e) => handleInputChange("section", e.target.value)}
-                  required
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="grade">
+                Grade Level <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={formData.grade.toString()}
+                onValueChange={(value) =>
+                  handleInputChange("grade", parseInt(value))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select grade" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((grade) => (
+                    <SelectItem key={grade} value={grade.toString()}>
+                      Grade {grade}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -221,69 +186,6 @@ export function AddChildDialog({
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 2: Emergency Contact */}
-          <div className="space-y-4">
-            <h3 className="font-medium text-sm text-muted-foreground">
-              Step 2: Emergency Contact
-            </h3>
-
-            <div className="space-y-2">
-              <Label htmlFor="contactName">
-                Contact Name <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="contactName"
-                placeholder="Full name"
-                value={formData.emergencyContact.name}
-                onChange={(e) =>
-                  handleInputChange("emergencyContact.name", e.target.value)
-                }
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="relationship">
-                  Relationship <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={formData.emergencyContact.relationship}
-                  onValueChange={(value) =>
-                    handleInputChange("emergencyContact.relationship", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select relationship" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="parent">Parent</SelectItem>
-                    <SelectItem value="guardian">Guardian</SelectItem>
-                    <SelectItem value="grandparent">Grandparent</SelectItem>
-                    <SelectItem value="sibling">Sibling</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">
-                  Phone Number <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+1234567890"
-                  value={formData.emergencyContact.phone}
-                  onChange={(e) =>
-                    handleInputChange("emergencyContact.phone", e.target.value)
-                  }
-                  required
-                />
               </div>
             </div>
           </div>

@@ -423,32 +423,32 @@ export default function DashboardPage() {
   const headerContent = getHeaderContent();
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="space-y-6">
+    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
         <motion.div
-          className="bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 border-b border-border rounded-lg p-6"
+          className="bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 border-b border-border rounded-lg p-4 sm:p-6"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col gap-4">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent flex items-center gap-3">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent flex items-center gap-2 sm:gap-3">
                 {headerContent.icon}
                 {headerContent.title}
               </h1>
-              <p className="text-muted-foreground mt-2">
+              <p className="text-sm sm:text-base text-muted-foreground mt-2">
                 {headerContent.description}
               </p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
               {headerContent.stats.length > 0 && (
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                   {headerContent.stats.map((stat, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-2 text-sm text-muted-foreground"
+                      className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground"
                     >
                       {stat.icon}
                       <span>
@@ -473,23 +473,29 @@ export default function DashboardPage() {
               )}
 
               {userData?.role === "parent" && (
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <div className="flex gap-2">
+                    <Button
+                      variant={
+                        selectedTab === "overview" ? "default" : "outline"
+                      }
+                      onClick={() => setSelectedTab("overview")}
+                      className="transition-all duration-200 flex-1 sm:flex-none"
+                    >
+                      Overview
+                    </Button>
+                    <Button
+                      variant={
+                        selectedTab === "children" ? "default" : "outline"
+                      }
+                      onClick={() => setSelectedTab("children")}
+                      className="transition-all duration-200 flex-1 sm:flex-none"
+                    >
+                      Children
+                    </Button>
+                  </div>
                   <Button
-                    variant={selectedTab === "overview" ? "default" : "outline"}
-                    onClick={() => setSelectedTab("overview")}
-                    className="transition-all duration-200"
-                  >
-                    Overview
-                  </Button>
-                  <Button
-                    variant={selectedTab === "children" ? "default" : "outline"}
-                    onClick={() => setSelectedTab("children")}
-                    className="transition-all duration-200"
-                  >
-                    Children
-                  </Button>
-                  <Button
-                    className="gap-2"
+                    className="gap-2 w-full sm:w-auto"
                     onClick={() => setAddChildDialogOpen(true)}
                   >
                     <UserPlus className="h-4 w-4" />
