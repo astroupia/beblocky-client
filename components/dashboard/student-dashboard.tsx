@@ -87,10 +87,10 @@ export function StudentDashboard({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 sm:py-8">
         {/* Stats Grid */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -145,7 +145,7 @@ export function StudentDashboard({
         {/* Content based on selected tab */}
         {selectedTab === "overview" && (
           <motion.div
-            className="space-y-8"
+            className="space-y-6 sm:space-y-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
@@ -228,7 +228,7 @@ export function StudentDashboard({
 
         {selectedTab === "courses" && (
           <motion.div
-            className="space-y-6"
+            className="space-y-4 sm:space-y-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
@@ -257,7 +257,7 @@ export function StudentDashboard({
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {accessibleCourses.map((course, index) => (
                 <CourseCard
                   key={course._id}

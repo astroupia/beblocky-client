@@ -102,10 +102,10 @@ export function ParentDashboard({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 sm:py-8">
         {/* Stats Grid */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -160,7 +160,7 @@ export function ParentDashboard({
         {/* Content based on selected tab */}
         {selectedTab === "overview" && (
           <motion.div
-            className="space-y-8"
+            className="space-y-6 sm:space-y-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
@@ -247,7 +247,7 @@ export function ParentDashboard({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="text-center p-4 rounded-lg bg-muted/50">
                     <div className="text-2xl font-bold text-primary">
                       {children.reduce(
@@ -287,15 +287,18 @@ export function ParentDashboard({
 
         {selectedTab === "children" && (
           <motion.div
-            className="space-y-6"
+            className="space-y-4 sm:space-y-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Your Children</h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <h2 className="text-xl sm:text-2xl font-bold">Your Children</h2>
               {/* Replace the existing AddChildModal usage in the header section with: */}
-              <Button className="gap-2" onClick={() => setAddDialogOpen(true)}>
+              <Button
+                className="gap-2 w-full sm:w-auto"
+                onClick={() => setAddDialogOpen(true)}
+              >
                 <UserPlus className="h-4 w-4" />
                 Add Child
               </Button>
@@ -322,7 +325,7 @@ export function ParentDashboard({
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {resolvedChildren.map((child, index) => (
                   <StudentCard
                     key={

@@ -18,6 +18,12 @@ export function SearchBar({ className, onSearch }: SearchBarProps) {
   const handleSearch = (value: string) => {
     setQuery(value);
     onSearch?.(value);
+
+    // If search query is not empty, redirect to courses page with search
+    if (value.trim()) {
+      const searchParams = new URLSearchParams({ q: value.trim() });
+      window.location.href = `/courses?${searchParams.toString()}`;
+    }
   };
 
   return (
@@ -44,7 +50,12 @@ export function SearchBar({ className, onSearch }: SearchBarProps) {
           className="border-0 bg-transparent pl-10 pr-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground"
           placeholder="Search courses, children..."
           value={query}
-          onChange={(e) => handleSearch(e.target.value)}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSearch(query);
+            }
+          }}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
         />

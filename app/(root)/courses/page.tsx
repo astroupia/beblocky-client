@@ -428,13 +428,13 @@ export default function CoursesPage() {
   });
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
       {/* Loading State */}
       {(sessionLoading || loading) && (
-        <div className="flex items-center justify-center py-20">
+        <div className="flex items-center justify-center py-12 sm:py-20">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-            <p className="text-muted-foreground">
+            <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary mx-auto mb-3 sm:mb-4" />
+            <p className="text-sm sm:text-base text-muted-foreground">
               {sessionLoading ? "Loading session..." : "Loading courses..."}
             </p>
           </div>
@@ -443,13 +443,15 @@ export default function CoursesPage() {
 
       {/* Error State */}
       {error && (
-        <div className="flex items-center justify-center py-20">
+        <div className="flex items-center justify-center py-12 sm:py-20">
           <div className="text-center">
-            <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">
+            <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-destructive mx-auto mb-3 sm:mb-4" />
+            <h3 className="text-base sm:text-lg font-semibold mb-2">
               Failed to load courses
             </h3>
-            <p className="text-muted-foreground mb-4">{error}</p>
+            <p className="text-sm sm:text-base text-muted-foreground mb-4">
+              {error}
+            </p>
             <Button onClick={refetch} className="gap-2">
               <RefreshCw className="h-4 w-4" />
               Try Again
@@ -460,34 +462,30 @@ export default function CoursesPage() {
 
       {/* Content - Only show when not loading and no error */}
       {!sessionLoading && !loading && !error && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Header */}
           <motion.div
-            className="bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 border-b border-border rounded-lg p-6"
+            className="bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 border-b border-border rounded-lg p-4 sm:p-6"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col gap-4">
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent flex items-center gap-3">
-                  <Sparkles className="h-8 w-8 text-primary" />
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent flex items-center gap-2 sm:gap-3">
+                  <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                   Explore Courses
                 </h1>
-                <p className="text-muted-foreground mt-2">
+                <p className="text-sm sm:text-base text-muted-foreground mt-2">
                   Discover amazing coding courses designed for young learners
                 </p>
               </div>
-              <Button className="gap-2">
-                <BookOpen className="h-4 w-4" />
-                View All
-              </Button>
             </div>
           </motion.div>
 
           {/* Filters */}
           <motion.div
-            className="flex flex-col md:flex-row gap-4"
+            className="flex flex-col gap-3 sm:gap-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -502,48 +500,50 @@ export default function CoursesPage() {
               />
             </div>
 
-            <Select
-              value={selectedLanguage}
-              onValueChange={setSelectedLanguage}
-            >
-              <SelectTrigger className="w-full md:w-48">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Language" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Languages</SelectItem>
-                <SelectItem value="Python">Python</SelectItem>
-                <SelectItem value="HTML">HTML</SelectItem>
-                <SelectItem value="JavaScript">JavaScript</SelectItem>
-                <SelectItem value="Scratch">Scratch</SelectItem>
-                <SelectItem value="React Native">React Native</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <Select
+                value={selectedLanguage}
+                onValueChange={setSelectedLanguage}
+              >
+                <SelectTrigger className="w-full">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Language" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Languages</SelectItem>
+                  <SelectItem value="Python">Python</SelectItem>
+                  <SelectItem value="HTML">HTML</SelectItem>
+                  <SelectItem value="JavaScript">JavaScript</SelectItem>
+                  <SelectItem value="Scratch">Scratch</SelectItem>
+                  <SelectItem value="React Native">React Native</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <Select value={selectedPlan} onValueChange={setSelectedPlan}>
-              <SelectTrigger className="w-full md:w-48">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Plan" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Plans</SelectItem>
-                <SelectItem value={CourseSubscriptionType.FREE}>
-                  Free
-                </SelectItem>
-                <SelectItem value={CourseSubscriptionType.STARTER}>
-                  Starter
-                </SelectItem>
-                <SelectItem value={CourseSubscriptionType.BUILDER}>
-                  Builder
-                </SelectItem>
-                <SelectItem value={CourseSubscriptionType.PRO}>
-                  Pro Bundle
-                </SelectItem>
-                <SelectItem value={CourseSubscriptionType.ORGANIZATION}>
-                  Organization
-                </SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+                <SelectTrigger className="w-full">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Plans</SelectItem>
+                  <SelectItem value={CourseSubscriptionType.FREE}>
+                    Free
+                  </SelectItem>
+                  <SelectItem value={CourseSubscriptionType.STARTER}>
+                    Starter
+                  </SelectItem>
+                  <SelectItem value={CourseSubscriptionType.BUILDER}>
+                    Builder
+                  </SelectItem>
+                  <SelectItem value={CourseSubscriptionType.PRO}>
+                    Pro Bundle
+                  </SelectItem>
+                  <SelectItem value={CourseSubscriptionType.ORGANIZATION}>
+                    Organization
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </motion.div>
 
           {/* Results Count */}
@@ -552,7 +552,7 @@ export default function CoursesPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               {activeCourses && activeCourses.length > 0 ? (
                 <>
                   Showing {Object.values(filteredCoursesByPlan).flat().length}{" "}
@@ -565,7 +565,7 @@ export default function CoursesPage() {
           </motion.div>
 
           {/* Courses by Plan */}
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {Object.entries(filteredCoursesByPlan).map(
               ([plan, planCourses]) => {
                 const config =
@@ -638,7 +638,7 @@ export default function CoursesPage() {
                             transition={{ duration: 0.3 }}
                           >
                             <CardContent className="pt-0">
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                 {planCourses.map((course) => (
                                   <motion.div
                                     key={course._id}
@@ -667,29 +667,29 @@ export default function CoursesPage() {
                                           </Badge>
                                         </div>
                                         <CardTitle
-                                          className="text-base font-semibold group-hover:text-primary transition-colors line-clamp-2"
+                                          className="text-sm sm:text-base font-semibold group-hover:text-primary transition-colors line-clamp-2"
                                           onClick={() =>
                                             handleCourseClick(course)
                                           }
                                         >
                                           {course.courseTitle}
                                         </CardTitle>
-                                        <p className="text-sm text-muted-foreground line-clamp-2">
+                                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                                           {course.courseDescription}
                                         </p>
                                       </CardHeader>
 
                                       <CardContent className="pt-0">
                                         <div className="space-y-3">
-                                          <div className="flex items-center justify-between text-sm">
+                                          <div className="flex items-center justify-between text-xs sm:text-sm">
                                             <div className="flex items-center gap-1 text-muted-foreground">
-                                              <BookOpen className="h-4 w-4" />
+                                              <BookOpen className="h-3 w-3 sm:h-4 sm:w-4" />
                                               <span>
                                                 {course.courseLanguage}
                                               </span>
                                             </div>
                                             <div className="flex items-center gap-1">
-                                              <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                                              <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500 fill-current" />
                                               <span className="font-medium">
                                                 {course.rating?.toFixed(1) ||
                                                   "4.5"}
@@ -697,9 +697,9 @@ export default function CoursesPage() {
                                             </div>
                                           </div>
 
-                                          <div className="flex items-center justify-between text-sm">
+                                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0 text-xs sm:text-sm">
                                             <div className="flex items-center gap-1 text-muted-foreground">
-                                              <Clock className="h-4 w-4" />
+                                              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                                               <span>
                                                 {courseDurations[course._id] ||
                                                   2}
@@ -707,7 +707,7 @@ export default function CoursesPage() {
                                               </span>
                                             </div>
                                             <div className="flex items-center gap-1 text-muted-foreground">
-                                              <Users className="h-4 w-4" />
+                                              <Users className="h-3 w-3 sm:h-4 sm:w-4" />
                                               <span>
                                                 {courseStudents[course._id] ||
                                                   0}{" "}
@@ -716,7 +716,7 @@ export default function CoursesPage() {
                                             </div>
                                           </div>
 
-                                          <div className="flex gap-2 pt-2">
+                                          <div className="flex flex-col sm:flex-row gap-2 pt-2">
                                             <Button
                                               size="sm"
                                               className="flex-1"
@@ -838,47 +838,51 @@ export default function CoursesPage() {
                 transition={{ delay: 0.3 }}
               >
                 <Card className="max-w-2xl mx-auto bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
-                  <CardContent className="p-12">
-                    <div className="mb-6">
-                      <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white mx-auto mb-4">
-                        <Crown className="h-10 w-10" />
+                  <CardContent className="p-6 sm:p-12">
+                    <div className="mb-4 sm:mb-6">
+                      <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white mx-auto mb-3 sm:mb-4">
+                        <Crown className="h-8 w-8 sm:h-10 sm:w-10" />
                       </div>
-                      <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-4">
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-3 sm:mb-4 text-center">
                         Unlock More Courses
                       </h2>
-                      <p className="text-lg text-muted-foreground mb-6">
+                      <p className="text-sm sm:text-lg text-muted-foreground mb-4 sm:mb-6 text-center">
                         Upgrade your plan to access our complete library of
                         coding courses designed for young learners
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                      <div className="text-center p-4 rounded-lg bg-white/50 dark:bg-black/20">
-                        <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-3">
-                          <Smartphone className="h-6 w-6 text-blue-600" />
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+                      <div className="text-center p-3 sm:p-4 rounded-lg bg-white/50 dark:bg-black/20">
+                        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                          <Smartphone className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                         </div>
-                        <h3 className="font-semibold mb-1">Mobile Apps</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="text-sm sm:text-base font-semibold mb-1">
+                          Mobile Apps
+                        </h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           Interactive coding games
                         </p>
                       </div>
-                      <div className="text-center p-4 rounded-lg bg-white/50 dark:bg-black/20">
-                        <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-3">
-                          <Globe className="h-6 w-6 text-green-600" />
+                      <div className="text-center p-3 sm:p-4 rounded-lg bg-white/50 dark:bg-black/20">
+                        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                          <Globe className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                         </div>
-                        <h3 className="font-semibold mb-1">Web Development</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="text-sm sm:text-base font-semibold mb-1">
+                          Web Development
+                        </h3>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           HTML, CSS, JavaScript
                         </p>
                       </div>
-                      <div className="text-center p-4 rounded-lg bg-white/50 dark:bg-black/20">
-                        <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mx-auto mb-3">
-                          <Crown className="h-6 w-6 text-purple-600" />
+                      <div className="text-center p-3 sm:p-4 rounded-lg bg-white/50 dark:bg-black/20">
+                        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                          <Crown className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
                         </div>
-                        <h3 className="font-semibold mb-1">
+                        <h3 className="text-sm sm:text-base font-semibold mb-1">
                           Advanced Projects
                         </h3>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           Real-world applications
                         </p>
                       </div>

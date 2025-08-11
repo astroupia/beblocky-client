@@ -54,6 +54,26 @@ export function AppSidebar({ items }: Props) {
   const { data: session } = useSession();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [userData, setUserData] = useState<IUser | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Force collapse on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setIsCollapsed(true);
+    }
+  }, [isMobile]);
 
   // Fetch user data to get the actual role
   useEffect(() => {
@@ -93,7 +113,7 @@ export function AppSidebar({ items }: Props) {
       >
         {/* Collapse Button - Positioned on the left side of sidebar */}
         <motion.button
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={() => !isMobile && setIsCollapsed(!isCollapsed)}
           className={cn(
             "absolute top-4 z-20",
             "w-8 h-8 rounded-full border-2 border-border bg-card shadow-lg",
@@ -101,10 +121,13 @@ export function AppSidebar({ items }: Props) {
             "flex items-center justify-center",
             "hover:border-primary/50 hover:bg-primary/5",
             // Dynamic positioning based on sidebar state
-            isCollapsed ? "left-12" : "left-60" // 60 = 64 - 4 (sidebar width - button offset)
+            isCollapsed ? "left-12" : "left-60", // 60 = 64 - 4 (sidebar width - button offset)
+            // Hide on mobile
+            isMobile && "hidden"
           )}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: isMobile ? 1 : 1.1 }}
+          whileTap={{ scale: isMobile ? 1 : 0.95 }}
+          disabled={isMobile}
         >
           <motion.div
             animate={{ rotate: isCollapsed ? 0 : 180 }}
