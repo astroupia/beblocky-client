@@ -85,15 +85,38 @@ export default function SignInPage() {
 
       console.log("Sign-in successful, redirecting to /");
 
-      // Use window.location.href for more reliable redirects in deployed environments
-      window.location.href = "/";
-
-      // Fallback: if window.location.href doesn't work, try router.push
-      setTimeout(() => {
-        if (window.location.pathname !== "/") {
-          router.push("/");
+      // After successful sign-in, check subscription and redirect accordingly
+      try {
+        // Dynamically import useSubscription to avoid hook usage outside component
+        const { useSubscription } = await import("@/hooks/use-subscription");
+        // We can't use hooks here, so fallback to API call
+        const res = await fetch("/api/subscription/me");
+        const data = await res.json();
+        const plan = data?.planName || "Free";
+        if (plan === "Free") {
+          window.location.href = "/upgrade";
+          setTimeout(() => {
+            if (window.location.pathname !== "/upgrade") {
+              router.push("/upgrade");
+            }
+          }, 1000);
+        } else {
+          window.location.href = "/";
+          setTimeout(() => {
+            if (window.location.pathname !== "/") {
+              router.push("/");
+            }
+          }, 1000);
         }
-      }, 1000);
+      } catch (err) {
+        // fallback: just go to /
+        window.location.href = "/";
+        setTimeout(() => {
+          if (window.location.pathname !== "/") {
+            router.push("/");
+          }
+        }, 1000);
+      }
     } catch (err) {
       console.error("Sign-in error:", err);
       setError(err instanceof Error ? err.message : "Failed to sign in");
