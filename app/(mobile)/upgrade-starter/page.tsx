@@ -1,11 +1,36 @@
 "use client";
 
 import type React from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Check, Smartphone, ArrowRight, Lock, Sparkles } from "lucide-react";
+import { usePayment } from "@/hooks/use-payment";
+import { useSession } from "@/lib/auth-client";
+import {
+  PaymentMethodSelector,
+  PaymentProvider,
+  type StripePaymentData,
+  type ArifPayPaymentData,
+} from "@/components/payment/payment-method-selector";
+import { useToast } from "@/hooks/use-toast";
+import {
+  StripePlan,
+  StripeBillingCycle,
+  getStripePriceId as getStripePriceIdTyped,
+} from "@/types/stripe-pricing";
+import { CurrencyStudentSelector } from "@/components/upgrade/currency-student-selector";
+import { parentApi } from "@/lib/api/parent";
+import { childrenApi } from "@/lib/api/children";
+import type { IStudent } from "@/types/student";
 
 interface PricingPlan {
   id: string;
@@ -41,17 +66,178 @@ const starterPlan: PricingPlan = {
   note: "Competes directly with Kodable, codeSpark",
 };
 
+// Currency conversion rates
+const currencyRates = {
+  USD: 1,
+  ETB: 160,
+  KES: 129.2,
+  NGN: 1531.87,
+};
+
 export default function UpgradeStarterPage() {
+  const { data: session, isPending: sessionLoading } = useSession();
+  const [showPaymentSelector, setShowPaymentSelector] = useState(false);
+  const [selectedPaymentProvider, setSelectedPaymentProvider] =
+    useState<PaymentProvider | null>(null);
+  const [selectedCurrency, setSelectedCurrency] = useState<
+    "USD" | "ETB" | "KES" | "NGN"
+  >("USD");
+  const [studentCount, setStudentCount] = useState(1);
+  const [children, setChildren] = useState<IStudent[]>([]);
+  const [loadingChildren, setLoadingChildren] = useState(false);
+
+  const { toast } = useToast();
+  const {
+    loading: paymentLoading,
+    createArifPayPayment,
+    createStripePayment,
+  } = usePayment({
+    onSuccess: (response: any) => {
+      // Redirect to payment URL
+      if (response?.paymentUrl) {
+        window.location.href = response.paymentUrl;
+      } else if (response?.url) {
+        window.location.href = response.url;
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Payment Error",
+        description: error,
+        variant: "destructive",
+      });
+    },
+  });
+
   const isAnnual = false; // For this page, we'll default to monthly pricing for simplicity
+
+  // Load children when session is available
+  useEffect(() => {
+    const loadChildren = async () => {
+      if (!session?.user?.id) return;
+
+      setLoadingChildren(true);
+      try {
+        // Get parent by user ID
+        const parent = await parentApi.getParentByUserId(session.user.id);
+
+        // Get children for this parent
+        const childrenData = await childrenApi.getChildrenByParent(parent._id);
+        setChildren(childrenData);
+        // Set student count to number of children, minimum 1
+        setStudentCount(Math.max(1, childrenData.length));
+      } catch (error) {
+        console.error("Failed to load children:", error);
+        // If parent doesn't exist yet, that's okay - they can add children later
+      } finally {
+        setLoadingChildren(false);
+      }
+    };
+
+    loadChildren();
+  }, [session?.user?.id]);
 
   const getPrice = (plan: PricingPlan) => {
     if (typeof plan.monthlyPrice === "string") return plan.monthlyPrice;
-    return isAnnual ? `$${plan.annualPrice}` : `$${plan.monthlyPrice}`;
+
+    const basePrice = isAnnual
+      ? Number(plan.annualPrice)
+      : Number(plan.monthlyPrice);
+    const convertedPrice = basePrice * currencyRates[selectedCurrency];
+
+    // Format based on currency
+    switch (selectedCurrency) {
+      case "USD":
+        return `$${convertedPrice.toFixed(2)}`;
+      case "ETB":
+        return `Br${convertedPrice.toFixed(0)}`;
+      case "KES":
+        return `KSh${convertedPrice.toFixed(0)}`;
+      case "NGN":
+        return `₦${convertedPrice.toFixed(0)}`;
+      default:
+        return `$${convertedPrice.toFixed(2)}`;
+    }
   };
 
   const getPeriod = (plan: PricingPlan) => {
     if (typeof plan.monthlyPrice === "string") return "";
     return isAnnual ? "/year" : "/month";
+  };
+
+  const getStripePriceId = (planId: string, isAnnual: boolean): string => {
+    const plan = planId.toUpperCase() as StripePlan;
+    const billingCycle = isAnnual
+      ? StripeBillingCycle.ANNUAL
+      : StripeBillingCycle.MONTHLY;
+    return getStripePriceIdTyped(plan, billingCycle);
+  };
+
+  const handleChoosePlan = () => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to upgrade your plan",
+        variant: "destructive",
+      });
+      return;
+    }
+    setShowPaymentSelector(true);
+  };
+
+  const handlePaymentMethodSelect = async (
+    provider: PaymentProvider,
+    paymentData?: ArifPayPaymentData | StripePaymentData
+  ) => {
+    if (!session?.user?.id || !paymentData) {
+      toast({
+        title: "Payment Error",
+        description: "Missing payment information",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const planId = "starter";
+      const planName = "Starter Plan";
+      const baseAmount =
+        typeof starterPlan.monthlyPrice === "number"
+          ? starterPlan.monthlyPrice
+          : 6.99;
+
+      // Calculate total amount in USD based on student count (conversion to ETB happens server-side payload)
+      const totalUsdAmount = baseAmount * studentCount;
+
+      if (provider === PaymentProvider.ARIFPAY) {
+        const arifPayData = paymentData as ArifPayPaymentData;
+        await createArifPayPayment(
+          planId,
+          planName,
+          totalUsdAmount,
+          arifPayData.phoneNumber,
+          isAnnual,
+          selectedCurrency
+        );
+      } else if (provider === PaymentProvider.STRIPE) {
+        const stripeData = paymentData as StripePaymentData;
+        const stripePriceId = getStripePriceId(planId, isAnnual);
+        await createStripePayment(
+          planId,
+          planName,
+          stripePriceId,
+          isAnnual,
+          stripeData.phoneNumber
+        );
+      }
+    } catch (error) {
+      console.error("Payment initiation failed:", error);
+      toast({
+        title: "Payment Error",
+        description: "Failed to initiate payment. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -71,6 +257,14 @@ export default function UpgradeStarterPage() {
           for your child.
         </p>
       </motion.div>
+
+      {/* Currency and Student Selector */}
+      <CurrencyStudentSelector
+        selectedCurrency={selectedCurrency}
+        onCurrencyChange={setSelectedCurrency}
+        studentCount={studentCount}
+        onStudentCountChange={setStudentCount}
+      />
 
       {/* Starter Plan Card */}
       <motion.div
@@ -113,6 +307,11 @@ export default function UpgradeStarterPage() {
                   {getPeriod(starterPlan)}
                 </span>
               </div>
+              {studentCount > 1 && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Total for {studentCount} student{studentCount > 1 ? "s" : ""}
+                </p>
+              )}
             </div>
 
             <ul className="space-y-3 mb-6">
@@ -130,7 +329,8 @@ export default function UpgradeStarterPage() {
             <Button
               className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 transition-all duration-300 group shadow-lg"
               size="lg"
-              // onClick={() => router.push('/checkout?plan=starter')} // Example: Link to a checkout page
+              onClick={handleChoosePlan}
+              disabled={paymentLoading || loadingChildren}
             >
               <Sparkles className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" />
               Upgrade to Starter Plan
@@ -156,6 +356,31 @@ export default function UpgradeStarterPage() {
         <Lock className="h-4 w-4" />
         Your information is secure and encrypted.
       </motion.div>
+
+      {/* Payment Method Selector Dialog */}
+      <Dialog open={showPaymentSelector} onOpenChange={setShowPaymentSelector}>
+        <DialogContent className="w-full max-w-[98vw] sm:max-w-[90vw] lg:max-w-[1000px] xl:max-w-[1200px] 2xl:max-w-[1400px] max-h-[95vh] h-[70vh] p-6 overflow-y-auto scrollbar-hide">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Choose Payment Method</DialogTitle>
+          </DialogHeader>
+          <PaymentMethodSelector
+            onProviderChange={(p) => setSelectedPaymentProvider(p)}
+            onSelect={handlePaymentMethodSelect}
+            loading={paymentLoading}
+            selectedProvider={selectedPaymentProvider || undefined}
+            userId={session?.user?.id || ""}
+            planName="Starter Plan"
+            billingCycle="monthly"
+            amount={
+              // Pass unconverted USD amount; conversion for ArifPay happens in payload util
+              (typeof starterPlan.monthlyPrice === "number"
+                ? starterPlan.monthlyPrice
+                : 6.99) * studentCount
+            }
+            userEmail={session?.user?.email}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

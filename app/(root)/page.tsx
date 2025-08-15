@@ -13,6 +13,7 @@ import {
   TrendingUp,
   BookOpenCheck,
   UserPlus,
+  Loader2,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { childrenApi } from "@/lib/api/children";
@@ -241,12 +242,12 @@ export default function DashboardPage() {
   // Show loading state while session or data is loading
   if (isPending || loading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading dashboard...</p>
-          </div>
+      <div className="flex items-center justify-center py-12 sm:py-20">
+        <div className="text-center">
+          <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-primary mx-auto mb-3 sm:mb-4" />
+          <p className="text-sm sm:text-base text-muted-foreground">
+            Loading Dashboard...
+          </p>
         </div>
       </div>
     );
@@ -521,6 +522,10 @@ export default function DashboardPage() {
           open={addChildDialogOpen}
           onOpenChange={setAddChildDialogOpen}
           parentId={parentData?._id}
+          onSuccess={() => {
+            // Refresh the dashboard data
+            window.location.reload();
+          }}
         />
       </div>
     </div>

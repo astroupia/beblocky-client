@@ -14,19 +14,18 @@ import {
   Img,
 } from "@react-email/components";
 
-interface PasswordResetEmailProps {
+interface EmailVerificationProps {
   userName?: string;
   userEmail: string;
-  resetLink: string;
+  verificationLink: string;
   termsUrl?: string;
 }
 
-export const PasswordResetEmail = ({
+export const EmailVerification = ({
   userName,
   userEmail,
-  resetLink,
-  termsUrl,
-}: PasswordResetEmailProps) => {
+  verificationLink,
+}: EmailVerificationProps) => {
   return (
     <Html>
       <Head />
@@ -50,7 +49,7 @@ export const PasswordResetEmail = ({
                     <span style={logoText}>BeBlocky</span>
                   </div>
                 </div>
-                <Heading style={headerTitle}>Password Reset Request</Heading>
+                <Heading style={headerTitle}>Verify Your Email Address</Heading>
               </Column>
             </Row>
           </Section>
@@ -60,16 +59,15 @@ export const PasswordResetEmail = ({
             <Text style={greeting}>Hello {userName},</Text>
 
             <Text style={message}>
-              We received a request to reset your password for your BeBlocky
-              account. If you made this request, click the button below to
-              create a new password. If you didn't request this, you can safely
-              ignore this email.
+              Welcome to BeBlocky! To complete your account setup and start your
+              coding journey, please verify your email address by clicking the
+              button below.
             </Text>
 
             {/* CTA Button */}
             <Section style={ctaContainer}>
-              <Button style={ctaButton} href={resetLink}>
-                Reset My Password
+              <Button style={ctaButton} href={verificationLink}>
+                Verify Email Address
               </Button>
             </Section>
 
@@ -93,7 +91,8 @@ export const PasswordResetEmail = ({
                   <span style={infoCardTitle}>Link Expires Soon</span>
                 </div>
                 <Text style={infoCardText}>
-                  This reset link will expire in 15 minutes for your security.
+                  This verification link will expire in 24 hours for your
+                  security.
                 </Text>
               </div>
 
@@ -115,8 +114,8 @@ export const PasswordResetEmail = ({
                   <span style={infoCardTitle}>One-Time Use</span>
                 </div>
                 <Text style={infoCardText}>
-                  This link can only be used once. After resetting your
-                  password, it will become invalid.
+                  This link can only be used once. After verifying your email,
+                  it will become invalid.
                 </Text>
               </div>
 
@@ -132,14 +131,14 @@ export const PasswordResetEmail = ({
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth="2"
-                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
                     />
                   </svg>
-                  <span style={infoCardTitle}>Secure Process</span>
+                  <span style={infoCardTitle}>Get Started</span>
                 </div>
                 <Text style={infoCardText}>
-                  Your new password will be encrypted and stored securely in our
-                  system.
+                  Once verified, you'll have full access to all courses and
+                  features on BeBlocky.
                 </Text>
               </div>
             </Section>
@@ -163,7 +162,7 @@ export const PasswordResetEmail = ({
                 <span style={securityNoticeTitle}>Security Reminder</span>
               </div>
               <Text style={securityNoticeText}>
-                If you didn't request this password reset, please ignore this
+                If you didn't create a BeBlocky account, please ignore this
                 email or contact our support team immediately. Your account
                 security is important to us.
               </Text>
@@ -173,13 +172,13 @@ export const PasswordResetEmail = ({
               If the button above doesn't work, you can copy and paste this link
               into your browser:
               <br />
-              <Link href={resetLink} style={linkStyle}>
-                {resetLink}
+              <Link href={verificationLink} style={linkStyle}>
+                {verificationLink}
               </Link>
             </Text>
 
             <Text style={message}>
-              Best regards,
+              Welcome to the BeBlocky community!
               <br />
               <strong>The BeBlocky Team</strong>
             </Text>
@@ -190,16 +189,9 @@ export const PasswordResetEmail = ({
           {/* Footer Section */}
           <Section style={footer}>
             <Text style={footerText}>
-              This email was sent to {userEmail} because you requested a
-              password reset for your BeBlocky account.
+              This email was sent to {userEmail} to verify your BeBlocky
+              account.
             </Text>
-
-            <div style={footerLinks}>
-              <span style={footerSeparator}>•</span>
-              <Link href={termsUrl} style={footerLink}>
-                Terms of Service
-              </Link>
-            </div>
 
             <Text style={footerAddress}>
               BeBlocky - Coding Education Platform
@@ -451,4 +443,4 @@ const footerAddress = {
   lineHeight: "1.5",
 };
 
-export default PasswordResetEmail;
+export default EmailVerification;

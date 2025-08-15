@@ -13,6 +13,7 @@ import {
   CreditCard,
   ChevronLeft,
   ChevronRight,
+  MessageSquare,
 } from "lucide-react";
 import Image from "next/image";
 import { SearchBar } from "./search-bar";
@@ -25,6 +26,7 @@ import { userApi } from "@/lib/api/user";
 import type { IUser } from "@/lib/api/user";
 import Logo from "@/lib/images/logo.png";
 import IconLogo from "@/lib/images/icon-logo.png";
+import { ContactFormDialog } from "@/components/dialogs/contact-form-dialog";
 
 export type SidebarNavItem = {
   title: string;
@@ -43,6 +45,7 @@ const Icons = {
   progress: TrendingUp,
   settings: Settings,
   upgrade: CreditCard,
+  contact: MessageSquare,
 };
 
 interface Props {
@@ -55,6 +58,7 @@ export function AppSidebar({ items }: Props) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [userData, setUserData] = useState<IUser | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isContactDialogOpen, setIsContactDialogOpen] = useState(false);
 
   // Check if device is mobile
   useEffect(() => {
@@ -246,6 +250,27 @@ export function AppSidebar({ items }: Props) {
           })}
         </nav>
 
+        {/* Contact Button */}
+        <div
+          className={cn(
+            "border-t border-border overflow-hidden",
+            isCollapsed && "px-2"
+          )}
+        >
+          <button
+            onClick={() => setIsContactDialogOpen(true)}
+            className={cn(
+              "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:bg-accent hover:text-accent-foreground w-full",
+              "text-muted-foreground hover:text-foreground",
+              isCollapsed && "justify-center px-2"
+            )}
+            title={isCollapsed ? "Contact Support" : undefined}
+          >
+            <MessageSquare className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
+            {!isCollapsed && <span className="flex-1">Contact Support</span>}
+          </button>
+        </div>
+
         {/* User Button */}
         <div
           className={cn(
@@ -256,6 +281,12 @@ export function AppSidebar({ items }: Props) {
           <UserButton isCollapsed={isCollapsed} />
         </div>
       </div>
+
+      {/* Contact Form Dialog */}
+      <ContactFormDialog
+        isOpen={isContactDialogOpen}
+        onClose={() => setIsContactDialogOpen(false)}
+      />
     </div>
   );
 }

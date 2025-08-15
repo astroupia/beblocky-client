@@ -106,7 +106,7 @@ export function CourseCard({
       if (session?.user?.email) {
         const encryptedEmail = encryptEmail(session.user.email);
         const courseUrl = `https://ide.beblocky.com/courses/${course._id}/learn/user/${encryptedEmail}`;
-        window.open(courseUrl, "_blank");
+        window.open(courseUrl);
       }
     } else {
       // Show enrollment dialog

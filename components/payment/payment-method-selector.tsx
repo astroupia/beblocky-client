@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { RadioGroup } from "@/components/ui/radio-group";
 import { motion, AnimatePresence } from "framer-motion";
 import { CreditCard, Smartphone } from "lucide-react";
@@ -118,6 +118,26 @@ export function PaymentMethodSelector({
   const [isProcessing, setIsProcessing] = useState(false);
   const [focusedInput, setFocusedInput] = useState(false);
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const phoneSectionRef = useRef<HTMLDivElement | null>(null);
+
+  // Normalize plan name so we always send the selected plan label
+  const normalizedPlanName = (() => {
+    if (!planName) return "";
+    const idToName: Record<string, string> = {
+      free: "Free",
+      starter: "Starter",
+      builder: "Builder",
+      pro: "Pro Bundle",
+      "pro-bundle": "Pro Bundle",
+      probundle: "Pro Bundle",
+    };
+    const raw = planName.trim();
+    const stripped = raw.endsWith(" Plan") ? raw.slice(0, -5) : raw;
+    const lower = stripped.toLowerCase();
+    return idToName[lower] || stripped;
+  })();
+
   const validatePhoneNumber = useCallback(
     (phone: string, isInternational: boolean = false): boolean => {
       if (isInternational) {
@@ -144,7 +164,25 @@ export function PaymentMethodSelector({
       console.log("🧭 [Payment] Provider selected:", provider);
       // Only inform parent that provider changed; don't trigger payment
       onProviderChange?.(provider);
-      // Keep phone number for both payment methods now
+      // Auto-scroll to phone input when ArifPay is selected (mobile and desktop)
+      if (
+        provider === PaymentProvider.ARIFPAY &&
+        typeof window !== "undefined"
+      ) {
+        setTimeout(() => {
+          if (containerRef.current && phoneSectionRef.current) {
+            const container = containerRef.current;
+            const target = phoneSectionRef.current;
+            const top = target.offsetTop - 16;
+            container.scrollTo({ top, behavior: "smooth" });
+          } else if (phoneSectionRef.current) {
+            phoneSectionRef.current.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          }
+        }, 150);
+      }
     },
     [onProviderChange]
   );
@@ -185,7 +223,7 @@ export function PaymentMethodSelector({
           phoneNumber: cleanPhone,
           userId,
           amount,
-          planName,
+          planName: normalizedPlanName,
           billingCycle,
           email: userEmail,
         };
@@ -196,20 +234,12 @@ export function PaymentMethodSelector({
           onPaymentInitiated("https://payment.example.com/checkout");
         }
       } else if (selectedProvider === PaymentProvider.STRIPE) {
-        if (!cleanPhone.trim()) {
-          setPhoneError("Phone number is required for payment verification");
-          return;
-        }
-        if (!validatePhoneNumber(cleanPhone, true)) {
-          setPhoneError("Please enter a valid phone number with country code");
-          return;
-        }
-
+        // No phone number required for international payments
         const stripeData: StripePaymentData = {
-          phoneNumber: cleanPhone,
+          phoneNumber: "", // Empty string for international payments
           userId,
           amount,
-          planName,
+          planName: normalizedPlanName,
           billingCycle,
           email: userEmail,
         };
@@ -230,36 +260,16 @@ export function PaymentMethodSelector({
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 h-full max-h-[unset] w-full max-w-full px-4 sm:px-0">
+    <div
+      ref={containerRef}
+      className="space-y-4 sm:space-y-6 h-full max-h-[unset] w-full max-w-full overflow-y-auto scrollbar-hide"
+    >
       <PaymentHeader />
-
-      <AnimatePresence>
-        {selectedProvider && (
-          <motion.div
-            initial={{ opacity: 0, height: 0, y: -20 }}
-            animate={{ opacity: 1, height: "auto", y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="overflow-hidden"
-          >
-            <PhoneInput
-              phoneNumber={phoneNumber}
-              phoneError={phoneError}
-              focusedInput={focusedInput}
-              onPhoneChange={handlePhoneChange}
-              onFocus={() => setFocusedInput(true)}
-              onBlur={() => setFocusedInput(false)}
-              validatePhoneNumber={validatePhoneNumber}
-              isInternational={selectedProvider === PaymentProvider.STRIPE}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <RadioGroup
         value={selectedProvider}
         onValueChange={(value) => handleSelect(value as PaymentProvider)}
-        className="space-y-3 sm:space-y-4"
+        className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4"
       >
         {paymentMethods.map((method, index) => (
           <PaymentCard
@@ -274,13 +284,40 @@ export function PaymentMethodSelector({
         ))}
       </RadioGroup>
 
+      {/* Phone Input - Only for ArifPay (Local Payment) */}
+      <AnimatePresence>
+        {selectedProvider === PaymentProvider.ARIFPAY && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, y: -20 }}
+            animate={{ opacity: 1, height: "auto", y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
+            ref={phoneSectionRef}
+          >
+            <PhoneInput
+              phoneNumber={phoneNumber}
+              phoneError={phoneError}
+              focusedInput={focusedInput}
+              onPhoneChange={handlePhoneChange}
+              onFocus={() => setFocusedInput(true)}
+              onBlur={() => setFocusedInput(false)}
+              validatePhoneNumber={validatePhoneNumber}
+              isInternational={false}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {selectedProvider && (
           <ContinueButton
             selectedProvider={selectedProvider}
             loading={loading}
             isProcessing={isProcessing}
-            phoneNumber={phoneNumber}
+            phoneNumber={
+              selectedProvider === PaymentProvider.ARIFPAY ? phoneNumber : ""
+            }
             onClick={handleContinue}
           />
         )}

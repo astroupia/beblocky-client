@@ -41,7 +41,7 @@ export interface PaymentRequest {
   amount: number;
   cancelUrl: string;
   phone: number;
-  email?: string;
+  email: string;
   errorUrl: string;
   notifyUrl: string;
   successUrl: string;
@@ -309,6 +309,19 @@ export const createArifPayPayload = (
     );
   }
 
+  // Validate phone number format
+  const cleanPhoneNumber = phoneNumber.replace(/\s+/g, "");
+  if (!/^251[0-9]{9}$/.test(cleanPhoneNumber)) {
+    console.warn(
+      `⚠️ [ArifPay] Invalid phone number format: ${phoneNumber}. Expected format: 251xxxxxxxxx`
+    );
+  }
+
+  // Ensure email is provided
+  if (!email) {
+    console.warn(`⚠️ [ArifPay] Email not provided for user: ${userId}`);
+  }
+
   const urls = createPaymentUrls(planName, billingCycle);
 
   // Safely format plan name with fallback
@@ -326,19 +339,19 @@ export const createArifPayPayload = (
   };
 
   // For local payments (ArifPay), always convert to ETB
-  // If the amount is already in USD, just multiply by ETB rate
-  // If the amount is in another currency, first convert to USD, then to ETB
-  const etbAmount =
-    currency === "USD"
-      ? Math.round(amount * currencyRates.ETB)
-      : Math.round((amount / currencyRates[currency]) * currencyRates.ETB);
+  // The amount parameter is expected to be in USD, so we convert it to ETB
+  const etbAmount = Math.round(amount * currencyRates.ETB);
 
-  return {
+  console.log(
+    `🔍 [ArifPay] Converting amount: ${amount} USD to ${etbAmount} ETB`
+  );
+
+  const payload = {
     userId,
-    amount: etbAmount,
+    amount: etbAmount, // Total amount in ETB
     cancelUrl: urls.cancelUrl,
-    phone: parseInt(phoneNumber),
-    email,
+    phone: parseInt(cleanPhoneNumber),
+    email: email || `user_${userId}@beblocky.com`, // Ensure email is always provided
     errorUrl: urls.errorUrl,
     notifyUrl: urls.notifyUrl,
     successUrl: urls.successUrl,
@@ -355,19 +368,25 @@ export const createArifPayPayload = (
       PaymentMethod.HELLOCASH,
       PaymentMethod.MPESSA,
     ],
-    expireDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Convert to ISO string
+    expireDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     items: [
       {
         name: `${formattedPlanName} Plan`,
         quantity: 1,
-        price: etbAmount,
-        description: "Subscription Purchase",
+        price: etbAmount, // Price in ETB for the items array
+        description: `${formattedPlanName} ${billingCycle} subscription for BeBlocky`,
         image:
           "https://code.beblocky.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Ficon-logo.55ac8515.png&w=96&q=75",
       },
     ],
     lang: "EN",
   };
+
+  console.log(
+    "🔍 [ArifPay Payload] Generated payload:",
+    JSON.stringify(payload, null, 2)
+  );
+  return payload;
 };
 
 // Helper function to handle payment flow

@@ -272,6 +272,13 @@ export function CourseDetailsDialog({
     return !covered;
   })();
 
+  // Determine if current user has access to this course level
+  const studentHasAccess = (() => {
+    if (!course) return false;
+    const userPlan = subscription?.planName || null;
+    return canAccessCourse(userPlan as any, course.subType);
+  })();
+
   const features = [
     "Interactive coding exercises",
     "Step-by-step tutorials",
@@ -624,25 +631,42 @@ export function CourseDetailsDialog({
             </Button>
 
             {userType === "student" ? (
-              <Button
-                onClick={handleAction}
-                disabled={isLoading || isEnrolled}
-                className="flex-1 gap-2"
-              >
-                {isLoading ? (
-                  "Enrolling..."
-                ) : isEnrolled ? (
-                  <>
-                    <CheckCircle className="h-4 w-4" />
-                    Already Enrolled
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4" />
-                    {course.progress ? "Continue Learning" : "Enroll Now"}
-                  </>
-                )}
-              </Button>
+              studentHasAccess ? (
+                <Button
+                  onClick={handleAction}
+                  disabled={isLoading || isEnrolled}
+                  className="flex-1 gap-2"
+                >
+                  {isLoading ? (
+                    "Enrolling..."
+                  ) : isEnrolled ? (
+                    <>
+                      <CheckCircle className="h-4 w-4" />
+                      Already Enrolled
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4" />
+                      {course.progress ? "Continue Learning" : "Enroll Now"}
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => onAddToPlan?.(course._id)}
+                  disabled={isLoading}
+                  className="flex-1 gap-2"
+                >
+                  {isLoading ? (
+                    "Adding..."
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4" />
+                      Add to Plan
+                    </>
+                  )}
+                </Button>
+              )
             ) : shouldShowAddToPlan && !userHasSameCourse ? (
               <Button
                 onClick={handleAction}

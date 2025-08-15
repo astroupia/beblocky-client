@@ -36,6 +36,7 @@ import {
   StripeBillingCycle,
   getStripePriceId as getStripePriceIdTyped,
 } from "@/types/stripe-pricing";
+import { getCurrentPlanIdFromSubscription } from "@/lib/utils/subscription-hierarchy";
 
 interface PricingPlan {
   id: string;
@@ -176,7 +177,8 @@ export default function UpgradePage() {
     },
   });
 
-  const { hasActiveSubscription } = useSubscription();
+  const { subscription } = useSubscription();
+  const currentPlanId = getCurrentPlanIdFromSubscription(subscription);
 
   const convertPrice = (price: number | string): string => {
     if (typeof price === "string") return price;
@@ -242,14 +244,18 @@ export default function UpgradePage() {
     try {
       if (provider === "arifpay") {
         const plan = pricingPlans.find((p) => p.id === selectedPlan)!;
-        const amount =
+
+        // For ArifPay, we need to pass the already-converted ETB amount
+        // The createArifPayPayload function will handle the conversion
+        const baseUsdAmount =
           typeof plan.monthlyPrice === "number"
             ? plan.monthlyPrice * studentCount
             : 0;
+
         await createArifPayPayment(
           selectedPlan,
           "Plan",
-          amount,
+          baseUsdAmount, // Pass USD amount, conversion happens in createArifPayPayload
           paymentData!.phoneNumber,
           false,
           selectedCurrency
@@ -339,7 +345,7 @@ export default function UpgradePage() {
         getPrice={getPrice}
         getPeriod={getPeriod}
         onChoosePlan={handleChoosePlan}
-        currentUserPlan={hasActiveSubscription() ? "builder" : "free"} // TODO: Get actual current plan
+        currentUserPlan={currentPlanId}
       />
 
       {/* School Plan */}
@@ -347,7 +353,7 @@ export default function UpgradePage() {
 
       {/* Payment Method Selector Dialog */}
       <Dialog open={showPaymentSelector} onOpenChange={setShowPaymentSelector}>
-        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] p-0 overflow-auto">
+        <DialogContent className="w-full max-w-[98vw] sm:max-w-[90vw] lg:max-w-[1000px] xl:max-w-[1200px] 2xl:max-w-[1400px] max-h-[95vh] h-[70vh] p-6 overflow-y-auto scrollbar-hide">
           <DialogHeader className="sr-only">
             <DialogTitle>Choose Payment Method</DialogTitle>
           </DialogHeader>

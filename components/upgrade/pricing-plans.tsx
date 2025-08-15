@@ -43,8 +43,8 @@ export function PricingPlans({
     // If no current plan, show all paid plans
     if (!currentUserPlan || currentUserPlan === "free") return true;
 
-    // Define plan hierarchy (higher index = higher tier)
-    const planHierarchy = ["free", "starter", "builder", "pro"];
+    // Define plan hierarchy from lower to higher
+    const planHierarchy = ["free", "starter", "builder", "pro"]; // ascending
     const currentPlanIndex = planHierarchy.indexOf(currentUserPlan);
     const planIndex = planHierarchy.indexOf(planId);
 
@@ -52,20 +52,20 @@ export function PricingPlans({
     return planIndex > currentPlanIndex;
   };
 
-  // Helper function to determine if plan is current user's plan
+  // Exact current plan check
   const isCurrentUserPlan = (planId: string) => {
     return currentUserPlan === planId;
   };
 
-  // Helper function to determine if plan is lower than current user's plan
+  // Lower than current (covered)
   const isLowerThanCurrentPlan = (planId: string) => {
     if (!currentUserPlan || currentUserPlan === "free") return false;
 
-    const planHierarchy = ["free", "starter", "builder", "pro"];
+    const planHierarchy = ["free", "starter", "builder", "pro"]; // ascending
     const currentPlanIndex = planHierarchy.indexOf(currentUserPlan);
     const planIndex = planHierarchy.indexOf(planId);
 
-    return planIndex < currentPlanIndex;
+    return planIndex > -1 && planIndex < currentPlanIndex;
   };
 
   const containerVariants = {
@@ -147,7 +147,15 @@ export function PricingPlans({
                 ))}
               </ul>
 
-              {shouldShowChoosePlan(plan.id) ? (
+              {isCurrentUserPlan(plan.id) ? (
+                <Button className="w-full" disabled>
+                  Current Plan
+                </Button>
+              ) : isLowerThanCurrentPlan(plan.id) ? (
+                <Button className="w-full" disabled>
+                  Covered
+                </Button>
+              ) : shouldShowChoosePlan(plan.id) ? (
                 <Button
                   onClick={() => onChoosePlan(plan.id)}
                   className={`w-full ${
@@ -157,14 +165,6 @@ export function PricingPlans({
                   }`}
                 >
                   Choose Plan
-                </Button>
-              ) : isCurrentUserPlan(plan.id) ? (
-                <Button className="w-full" disabled>
-                  Current Plan
-                </Button>
-              ) : isLowerThanCurrentPlan(plan.id) ? (
-                <Button className="w-full" disabled>
-                  Current Plan
                 </Button>
               ) : (
                 <Button className="w-full" disabled>

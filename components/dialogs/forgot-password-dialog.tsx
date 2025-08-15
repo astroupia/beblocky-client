@@ -28,6 +28,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { forgetPassword } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface ForgotPasswordDialogProps {
   trigger?: React.ReactNode;
@@ -83,22 +84,50 @@ export function ForgotPasswordDialog({
       } else {
         const { data, error } = await forgetPassword({
           email,
-          redirectTo: "/reset-pasword", // our reset page
+          redirectTo: "/reset-password",
         } as any);
-        if (error)
-          throw new Error(error.message || "Failed to send reset email");
+
+        if (error) {
+          // Handle specific authentication errors with toast
+          const errorMessage = error.message || "Failed to send reset email";
+
+          if (
+            errorMessage.includes("Invalid email") ||
+            errorMessage.includes("invalid email")
+          ) {
+            toast.error("Please enter a valid email address");
+          } else if (
+            errorMessage.includes("User not found") ||
+            errorMessage.includes("user not found")
+          ) {
+            toast.error("No account found with this email address.");
+          } else if (
+            errorMessage.includes("Email not verified") ||
+            errorMessage.includes("email not verified")
+          ) {
+            toast.error("Please verify your email address first.");
+          } else {
+            toast.error(errorMessage);
+          }
+
+          throw new Error(errorMessage);
+        }
       }
 
       setDialogState("success");
       startCountdown();
       // Redirect to reset page as requested
       setTimeout(() => {
-        router.push("/reset-pasword");
+        router.push("/reset-password");
       }, 800);
     } catch (error) {
       console.error("Password reset failed:", error);
       setDialogState("error");
-      setEmailError("Failed to send reset email. Please try again.");
+
+      // Don't set email error if we already handled it with toast
+      if (error instanceof Error && !error.message.includes("Invalid email")) {
+        setEmailError("Failed to send reset email. Please try again.");
+      }
     }
   };
 

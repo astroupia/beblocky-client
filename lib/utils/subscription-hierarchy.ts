@@ -49,7 +49,7 @@ export function canAccessCourse(
  * @returns Array of courses the user can access
  */
 export function filterCoursesBySubscription<
-  T extends { subType: CourseSubscriptionType }
+  T extends { subType: CourseSubscriptionType },
 >(courses: T[], userPlan: SubscriptionPlan | null): T[] {
   return courses.filter((course) => canAccessCourse(userPlan, course.subType));
 }
@@ -86,4 +86,35 @@ export function getAccessibleCourseTypes(
       return userPlanLevel >= coursePlanLevel;
     })
     .map(([courseType, _]) => courseType as CourseSubscriptionType);
+}
+
+// ----- New shared helpers for UI plan IDs -----
+
+// Map backend plan names to lowercase UI plan IDs
+export function mapPlanNameToId(
+  planName?: string | null
+): "free" | "starter" | "builder" | "pro" | "organization" {
+  const normalized = (planName || "Free").toLowerCase();
+  if (normalized.includes("pro")) return "pro";
+  if (normalized.includes("builder")) return "builder";
+  if (normalized.includes("starter")) return "starter";
+  if (normalized.includes("org")) return "organization";
+  return "free";
+}
+
+// Get current plan ID from subscription object (safe)
+export function getCurrentPlanIdFromSubscription(
+  subscription?: { status?: string; planName?: string } | null
+): "free" | "starter" | "builder" | "pro" | "organization" {
+  if (!subscription || subscription.status !== "active") return "free";
+  return mapPlanNameToId(subscription.planName);
+}
+
+// Compare UI plan IDs by rank (returns positive if a > b)
+export function comparePlanIds(
+  a: "free" | "starter" | "builder" | "pro" | "organization",
+  b: "free" | "starter" | "builder" | "pro" | "organization"
+): number {
+  const order = ["free", "starter", "builder", "pro", "organization"];
+  return order.indexOf(a) - order.indexOf(b);
 }
