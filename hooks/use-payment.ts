@@ -134,9 +134,10 @@ export function usePayment(options: UsePaymentOptions = {}) {
         cancelUrl: `${baseUrl}/upgrade?status=canceled`,
         errorUrl: `${baseUrl}/upgrade?status=error`,
         notifyUrl: `${baseUrl}/api/payment/webhook`,
-        phone: phoneNumber
-          ? parseInt(phoneNumber.replace(/\s+/g, ""))
-          : 251911234567, // Use provided phone or default
+        phone:
+          phoneNumber && phoneNumber.trim()
+            ? parseInt(phoneNumber.replace(/\s+/g, ""))
+            : 251911234567, // Use provided phone or default
         expireDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         mode: "subscription", // Set mode to subscription for recurring payments
       };

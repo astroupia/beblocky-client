@@ -22,6 +22,7 @@ import { UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { parentApi } from "@/lib/api/parent";
 import type { IAddChildDto } from "@/lib/api/children";
+import { useSession } from "@/lib/auth-client";
 
 interface AddChildDialogProps {
   open: boolean;
@@ -36,6 +37,7 @@ export function AddChildDialog({
   parentId,
   onSuccess,
 }: AddChildDialogProps) {
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<IAddChildDto>({
     email: "",
@@ -47,8 +49,23 @@ export function AddChildDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!parentId) {
-      toast.error("Parent ID is required");
+    // Get the correct parent ID from the session if not provided
+    let actualParentId = parentId;
+
+    if (!actualParentId && session?.user?.id) {
+      try {
+        // Fetch parent data to get the MongoDB ObjectId
+        const parentData = await parentApi.getParentByUserId(session.user.id);
+        actualParentId = parentData._id;
+      } catch (error) {
+        console.error("Failed to fetch parent data:", error);
+        toast.error("Failed to fetch parent information. Please try again.");
+        return;
+      }
+    }
+
+    if (!actualParentId) {
+      toast.error("Parent information not found. Please try again.");
       return;
     }
 
@@ -67,7 +84,14 @@ export function AddChildDialog({
 
     setLoading(true);
     try {
-      await parentApi.addChildToParent(parentId, formData);
+      console.log(
+        "🔍 [AddChildDialog] Adding child with parentId:",
+        actualParentId
+      );
+      console.log("🔍 [AddChildDialog] Child data:", formData);
+
+      await parentApi.addChildToParent(actualParentId, formData);
+
       toast.success("Child added successfully!");
       onOpenChange(false);
       onSuccess?.();
@@ -81,7 +105,26 @@ export function AddChildDialog({
       });
     } catch (error) {
       console.error("Failed to add child:", error);
-      toast.error("Failed to add child. Please try again.");
+
+      // Provide more specific error messages
+      let errorMessage = "Failed to add child. Please try again.";
+
+      if (error instanceof Error) {
+        if (error.message.includes("Cast to ObjectId failed")) {
+          errorMessage =
+            "Invalid parent ID format. Please refresh the page and try again.";
+        } else if (error.message.includes("500")) {
+          errorMessage = "Server error occurred. Please try again later.";
+        } else if (error.message.includes("404")) {
+          errorMessage = "Parent not found. Please check your account status.";
+        } else if (error.message.includes("409")) {
+          errorMessage = "A child with this email already exists.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

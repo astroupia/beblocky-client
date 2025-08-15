@@ -191,7 +191,7 @@ export default function ChildrenPage() {
       <AddChildDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
-        parentId={session?.user?.id}
+        onSuccess={loadData}
       />
 
       <ManageCoursesDialog
