@@ -259,7 +259,38 @@ export default function SignUpPage() {
       console.log("Sign-up result:", result);
 
       if ("error" in result && result.error?.message) {
-        throw new Error(result.error.message);
+        // Handle specific authentication errors with toast
+        const errorMessage = result.error.message;
+
+        if (
+          errorMessage.includes("Invalid email") ||
+          errorMessage.includes("invalid email")
+        ) {
+          toast.error("Please enter a valid email address");
+        } else if (
+          errorMessage.includes("Email already exists") ||
+          errorMessage.includes("email already exists")
+        ) {
+          toast.error(
+            "An account with this email already exists. Please sign in instead."
+          );
+        } else if (
+          errorMessage.includes("Password") ||
+          errorMessage.includes("password")
+        ) {
+          toast.error(
+            "Please choose a stronger password (at least 8 characters)."
+          );
+        } else if (
+          errorMessage.includes("Name") ||
+          errorMessage.includes("name")
+        ) {
+          toast.error("Please provide a valid name.");
+        } else {
+          toast.error(errorMessage);
+        }
+
+        throw new Error(errorMessage);
       }
 
       // If signup was successful and we have a user ID, create user profile

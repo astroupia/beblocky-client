@@ -3,6 +3,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "@prisma/client";
 import { Resend } from "resend";
 import { PasswordResetEmail } from "@/components/email/password-reset-email";
+import { EmailVerification } from "@/components/email";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -17,6 +18,7 @@ export const auth = betterAuth({
   trustedOrigins: [
     "http://localhost:3000",
     "http://localhost:3001",
+    "http://localhost:3002",
     "https://beblocky.com",
     "https://www.beblocky.com",
     "https://code.beblocky.com",
@@ -34,11 +36,26 @@ export const auth = betterAuth({
       },
     },
   },
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url }) => {
+      resend.emails.send({
+        from: "noreply@beblocky.com",
+        to: user.email,
+        subject: "Beblocky - Verify your email address",
+        react: EmailVerification({
+          userName: user.name,
+          userEmail: user.email,
+          verificationLink: url,
+        }),
+      });
+    },
+    sendOnSignUp: true,
+  },
   emailAndPassword: {
     enabled: true,
-    sendResetPassword: async ({ user, url, token }, request) => {
+    sendResetPassword: async ({ user, url }) => {
       await resend.emails.send({
-        from: "app@beblocky.com",
+        from: "noreply@beblocky.com",
         to: user.email,
         subject: "Beblocky - Reset Your Password",
         react: PasswordResetEmail({
@@ -49,7 +66,7 @@ export const auth = betterAuth({
         }),
       });
     },
-    requireEmailVerification: false,
+    requireEmailVerification: true,
     transform: (data: {
       name: string;
       email: string;

@@ -20,6 +20,7 @@ import Link from "next/link";
 import { ForgotPasswordDialog } from "@/components/dialogs/forgot-password-dialog";
 import { signIn, useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -80,46 +81,50 @@ export default function SignInPage() {
       console.log("Sign-in result:", result);
 
       if ("error" in result && result.error?.message) {
-        throw new Error(result.error.message);
+        // Handle specific authentication errors with toast
+        const errorMessage = result.error.message;
+
+        if (
+          errorMessage.includes("Invalid email") ||
+          errorMessage.includes("invalid email")
+        ) {
+          toast.error("Please enter a valid email address");
+        } else if (
+          errorMessage.includes("Invalid password") ||
+          errorMessage.includes("invalid password")
+        ) {
+          toast.error("Invalid password. Please try again.");
+        } else if (
+          errorMessage.includes("User not found") ||
+          errorMessage.includes("user not found")
+        ) {
+          toast.error("No account found with this email address.");
+        } else if (
+          errorMessage.includes("Email not verified") ||
+          errorMessage.includes("email not verified")
+        ) {
+          toast.error("Please verify your email address before signing in.");
+        } else {
+          toast.error(errorMessage);
+        }
+
+        throw new Error(errorMessage);
       }
 
       console.log("Sign-in successful, redirecting to /");
 
       // After successful sign-in, check subscription and redirect accordingly
-      try {
-        // Dynamically import useSubscription to avoid hook usage outside component
-        const { useSubscription } = await import("@/hooks/use-subscription");
-        // We can't use hooks here, so fallback to API call
-        const res = await fetch("/api/subscription/me");
-        const data = await res.json();
-        const plan = data?.planName || "Free";
-        if (plan === "Free") {
-          window.location.href = "/upgrade";
-          setTimeout(() => {
-            if (window.location.pathname !== "/upgrade") {
-              router.push("/upgrade");
-            }
-          }, 1000);
-        } else {
-          window.location.href = "/";
-          setTimeout(() => {
-            if (window.location.pathname !== "/") {
-              router.push("/");
-            }
-          }, 1000);
-        }
-      } catch (err) {
-        // fallback: just go to /
-        window.location.href = "/";
-        setTimeout(() => {
-          if (window.location.pathname !== "/") {
-            router.push("/");
-          }
-        }, 1000);
+      toast.success("Signed in successfully!");
+
+      // Redirect to dashboard
+      router.push("/");
+    } catch (error) {
+      console.error("Sign-in failed:", error);
+
+      // Don't set error state if we already handled it with toast
+      if (error instanceof Error && !error.message.includes("Invalid email")) {
+        setError("Sign-in failed. Please try again.");
       }
-    } catch (err) {
-      console.error("Sign-in error:", err);
-      setError(err instanceof Error ? err.message : "Failed to sign in");
     } finally {
       setIsLoading(false);
     }
