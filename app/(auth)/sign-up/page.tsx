@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Github, Mail, Eye, EyeOff, User, Users } from "lucide-react";
+import { GoogleIcon } from "@/components/ui/google-icon";
 import Link from "next/link";
 import { signUp, useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
@@ -381,6 +382,40 @@ export default function SignUpPage() {
     }
   };
 
+  const handleGoogleSignUp = async () => {
+    if (!userType) {
+      setError("Please select your account type before continuing with Google");
+      return;
+    }
+
+    console.log(
+      "🎯 [SignUp] Google sign-up initiated for user type:",
+      userType
+    );
+    console.log(
+      "🎯 [SignUp] Google sign-up user role:",
+      userType === "parent" ? "PARENT" : "STUDENT"
+    );
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      // Store the selected role for use after Google auth
+      localStorage.setItem("signup_user_role", userType);
+      console.log("🎯 [SignUp] Stored user role for Google sign-up:", userType);
+
+      // For social auth, we just need to redirect to the auth endpoint
+      // We'll need to handle the user type selection after Google auth
+      window.location.href = "/api/auth/google";
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to sign up with Google"
+      );
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AuthLayout mode="signup">
       <motion.div
@@ -404,16 +439,28 @@ export default function SignUpPage() {
               </div>
             )}
 
-            {/* GitHub Sign Up */}
-            <Button
-              onClick={handleGithubSignUp}
-              disabled={isLoading || !userType}
-              variant="outline"
-              className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white border-slate-900 hover:border-slate-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Github className="mr-2 h-5 w-5" />
-              Continue with GitHub
-            </Button>
+            {/* Social Sign Up Buttons */}
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                onClick={handleGithubSignUp}
+                disabled={isLoading || !userType}
+                variant="outline"
+                className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white border-slate-900 hover:border-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:border-slate-700 dark:hover:border-slate-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Github className="mr-2 h-5 w-5" />
+                GitHub
+              </Button>
+
+              <Button
+                onClick={handleGoogleSignUp}
+                disabled={isLoading || !userType}
+                variant="outline"
+                className="w-full h-12 bg-white hover:bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-600 dark:hover:border-slate-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <GoogleIcon className="mr-2 h-5 w-5" />
+                Google
+              </Button>
+            </div>
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
