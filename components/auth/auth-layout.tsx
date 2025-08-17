@@ -5,6 +5,7 @@ import type React from "react";
 import { motion } from "framer-motion";
 import { AuthSidebar } from "./auth-sidebar";
 import { AuthHeader } from "./auth-header";
+import { AuthErrorHandler } from "./auth-error-handler";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -17,6 +18,9 @@ export function AuthLayout({ children, mode }: AuthLayoutProps) {
       className="min-h-screen flex bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800"
       suppressHydrationWarning
     >
+      {/* Error handler for OAuth errors */}
+      <AuthErrorHandler />
+
       {/* Left sidebar with features and testimonial */}
       <AuthSidebar mode={mode} />
 

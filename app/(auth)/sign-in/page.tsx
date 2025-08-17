@@ -133,11 +133,10 @@ export default function SignInPage() {
 
   const handleGithubSignIn = async () => {
     setIsLoading(true);
+    setError("");
     try {
-      await signIn.social({
-        provider: "github",
-        callbackURL: "/",
-      });
+      // Redirect to the auth endpoint for social login
+      window.location.href = "/api/auth/github";
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to sign in with GitHub"
@@ -148,14 +147,13 @@ export default function SignInPage() {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
+    setError("");
     try {
-      await signIn.social({
-        provider: "google",
-        callbackURL: "/",
-      });
+      // Redirect to the auth endpoint for social login
+      window.location.href = "/api/auth/google";
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to sign in with GitHub"
+        err instanceof Error ? err.message : "Failed to sign in with Google"
       );
       setIsLoading(false);
     }

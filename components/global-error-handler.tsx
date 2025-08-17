@@ -7,14 +7,26 @@ export function GlobalErrorHandler() {
   useEffect(() => {
     // Global error handler for unhandled errors
     const handleError = (event: ErrorEvent) => {
+      console.error("Global error caught:", event.error);
+
       if (event.error?.message?.includes("Invalid email")) {
         toast.error("Please enter a valid email address");
+      } else if (event.error?.message?.includes("OAuth")) {
+        toast.error("Authentication failed. Please try again.");
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
       }
     };
 
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error("Global promise rejection caught:", event.reason);
+
       if (event.reason?.message?.includes("Invalid email")) {
         toast.error("Please enter a valid email address");
+      } else if (event.reason?.message?.includes("OAuth")) {
+        toast.error("Authentication failed. Please try again.");
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
       }
     };
 

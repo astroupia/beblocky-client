@@ -8,7 +8,7 @@ const publicPaths = ["/sign-in", "/sign-up", "/reset-password"];
 const publicPathPatterns = [
   /^\/sign-in/,
   /^\/sign-up/,
-  /^\/reset-pasword/,
+  /^\/reset-password/,
   /^\/api\/auth\/reset-password\/[^?]+/, // Better Auth reset password callback
   /^\/api\/auth\/[^/]+\/[^?]+/, // General Better Auth callbacks
 ];

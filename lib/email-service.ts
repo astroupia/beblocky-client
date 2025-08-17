@@ -185,7 +185,7 @@ class EmailService {
 }
 
 const defaultEmailService = new EmailService({
-  adminEmail: process.env.ADMIN_EMAIL || "admin@beblocky.com",
+  adminEmail: process.env.ADMIN_EMAIL || "app@beblocky.com",
   appUrl: process.env.NEXT_PUBLIC_APP_URL || "https://code.beblocky.com",
   adminDashboardUrl: process.env.ADMIN_DASHBOARD_URL,
   helpCenterUrl: process.env.HELP_CENTER_URL,
