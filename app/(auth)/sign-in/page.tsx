@@ -136,7 +136,10 @@ export default function SignInPage() {
     setError("");
     try {
       // Redirect to the auth endpoint for social login
-      window.location.href = "/api/auth/github";
+      await signIn.social({
+        provider: "github",
+        callbackURL: "/",
+      });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to sign in with GitHub"
@@ -149,8 +152,10 @@ export default function SignInPage() {
     setIsLoading(true);
     setError("");
     try {
-      // Redirect to the auth endpoint for social login
-      window.location.href = "/api/auth/google";
+      await signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to sign in with Google"

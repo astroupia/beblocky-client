@@ -18,7 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { Github, Mail, Eye, EyeOff, User, Users } from "lucide-react";
 import { GoogleIcon } from "@/components/ui/google-icon";
 import Link from "next/link";
-import { signUp, useSession } from "@/lib/auth-client";
+import { signIn, signUp, useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
 import { parentApi } from "@/lib/api/parent";
@@ -349,68 +349,33 @@ export default function SignUpPage() {
   };
 
   const handleGithubSignUp = async () => {
-    if (!userType) {
-      setError("Please select your account type before continuing with GitHub");
-      return;
-    }
-
-    console.log(
-      "🎯 [SignUp] GitHub sign-up initiated for user type:",
-      userType
-    );
-    console.log(
-      "🎯 [SignUp] GitHub sign-up user role:",
-      userType === "parent" ? "PARENT" : "STUDENT"
-    );
-
     setIsLoading(true);
     setError("");
-
     try {
-      // Store the selected role for use after GitHub auth
-      localStorage.setItem("signup_user_role", userType);
-      console.log("🎯 [SignUp] Stored user role for GitHub sign-up:", userType);
-
-      // For social auth, we just need to redirect to the auth endpoint
-      // We'll need to handle the user type selection after GitHub auth
-      window.location.href = "/api/auth/github";
+      // Redirect to the auth endpoint for social login
+      await signIn.social({
+        provider: "github",
+        callbackURL: "/",
+      });
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to sign up with GitHub"
+        err instanceof Error ? err.message : "Failed to sign in with GitHub"
       );
       setIsLoading(false);
     }
   };
 
   const handleGoogleSignUp = async () => {
-    if (!userType) {
-      setError("Please select your account type before continuing with Google");
-      return;
-    }
-
-    console.log(
-      "🎯 [SignUp] Google sign-up initiated for user type:",
-      userType
-    );
-    console.log(
-      "🎯 [SignUp] Google sign-up user role:",
-      userType === "parent" ? "PARENT" : "STUDENT"
-    );
-
     setIsLoading(true);
     setError("");
-
     try {
-      // Store the selected role for use after Google auth
-      localStorage.setItem("signup_user_role", userType);
-      console.log("🎯 [SignUp] Stored user role for Google sign-up:", userType);
-
-      // For social auth, we just need to redirect to the auth endpoint
-      // We'll need to handle the user type selection after Google auth
-      window.location.href = "/api/auth/google";
+      await signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to sign up with Google"
+        err instanceof Error ? err.message : "Failed to sign in with Google"
       );
       setIsLoading(false);
     }
