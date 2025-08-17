@@ -84,7 +84,7 @@ export function ForgotPasswordDialog({
       } else {
         const { data, error } = await forgetPassword({
           email,
-          redirectTo: "/reset-password",
+          redirectTo: "/sign-in",
         } as any);
 
         if (error) {
@@ -118,7 +118,7 @@ export function ForgotPasswordDialog({
       startCountdown();
       // Redirect to reset page as requested
       setTimeout(() => {
-        router.push("/reset-password");
+        router.push("/sign-in");
       }, 800);
     } catch (error) {
       console.error("Password reset failed:", error);
