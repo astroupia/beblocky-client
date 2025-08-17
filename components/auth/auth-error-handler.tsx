@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
-export function AuthErrorHandler() {
+function AuthErrorHandlerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -98,4 +98,12 @@ export function AuthErrorHandler() {
   }, [searchParams, router]);
 
   return null;
+}
+
+export function AuthErrorHandler() {
+  return (
+    <Suspense fallback={<div className="hidden" />}>
+      <AuthErrorHandlerContent />
+    </Suspense>
+  );
 }
