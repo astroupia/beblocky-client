@@ -26,6 +26,7 @@ import { studentApi } from "@/lib/api/student";
 import { toast } from "sonner";
 import { TermsConditionsDialog } from "@/components/dialogs/terms-and-condition";
 import { userApi } from "@/lib/api/user";
+import { handleParentSignUp } from "@/lib/api/role-conversion";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -114,11 +115,9 @@ export default function SignUpPage() {
     try {
       const updatedUser = await userApi.updateUser(userId, { role });
       console.log("✅ [SignUp] Role updated:", updatedUser);
-      toast.success("Account role updated successfully");
       return updatedUser;
     } catch (error) {
       console.error("❌ [SignUp] Failed to update user role:", error);
-      toast.warning("Account created, but role update failed");
       throw error;
     }
   };
@@ -134,30 +133,22 @@ export default function SignUpPage() {
       console.log("🎯 [SignUp] Stored role from localStorage:", storedRole);
       console.log("🎯 [SignUp] Current userType:", userType);
       console.log("🎯 [SignUp] Final role to use:", roleToUse);
-      console.log(
-        "🎯 [SignUp] User role:",
-        roleToUse === "parent" ? "PARENT" : "STUDENT"
-      );
 
       if (roleToUse === "parent") {
-        // Create parent profile using /parents/from-user endpoint
-        try {
-          console.log("🎯 [SignUp] Calling /parents/from-user endpoint");
-          const parentResult = await parentApi.createParentFromUser(userId);
-          console.log(
-            "🎯 [SignUp] Parent creation API response:",
-            parentResult
-          );
-          toast.success("Parent profile created successfully!");
+        // Use the new role conversion function for parent sign-up
+        console.log("🎯 [SignUp] Handling parent sign-up with role conversion");
+        const result = await handleParentSignUp(userId);
 
-          // Clear the stored role after successful creation
-          localStorage.removeItem("signup_user_role");
-        } catch (error) {
-          console.error("Failed to create parent profile:", error);
-          toast.warning(
-            "Account created successfully! Parent profile setup failed. You can complete this later."
-          );
+        if (result.success) {
+          toast.success(result.message);
+          console.log("✅ [SignUp] Parent sign-up completed successfully");
+        } else {
+          toast.warning(result.message);
+          console.error("❌ [SignUp] Parent sign-up failed:", result.message);
         }
+
+        // Clear the stored role after processing
+        localStorage.removeItem("signup_user_role");
       } else if (roleToUse === "student") {
         // Create student profile using /students/from-user endpoint
         try {
@@ -312,12 +303,22 @@ export default function SignUpPage() {
         await new Promise((resolve) => setTimeout(resolve, 600));
 
         const createdUserId = result.data.user.id as string;
-        // 1) Patch role only
-        await updateUserRole(createdUserId, userType as "parent" | "student");
-        // 2) Cleanup stored role; no profile instance creation here
-        try {
-          localStorage.removeItem("signup_user_role");
-        } catch {}
+
+        // For parent role, we need to handle the complete conversion process
+        if (userType === "parent") {
+          console.log(
+            "🎯 [SignUp] Parent role selected, initiating role conversion process"
+          );
+          // The role conversion will be handled in createUserProfiles
+          // We don't need to update the role here as it will be handled in the conversion process
+        } else {
+          // For student role, just update the role
+          console.log("🎯 [SignUp] Student role selected, updating user role");
+          await updateUserRole(createdUserId, userType as "parent" | "student");
+        }
+
+        // Create user profiles (this will handle role conversion for parents)
+        await createUserProfiles(createdUserId);
       } else {
         console.log(
           "No user ID found in result, skipping teacher profile creation"

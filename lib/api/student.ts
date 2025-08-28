@@ -141,6 +141,33 @@ class StudentApi {
 
     return response.json();
   }
+
+  async deleteStudent(studentId: string): Promise<void> {
+    const authHeaders = await this.getAuthHeaders();
+
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/students/${studentId}`;
+
+    console.log("🗑️ [Student API] DELETE deleteStudent:", {
+      url,
+      studentId,
+      hasAuth: !!authHeaders.Authorization,
+    });
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: authHeaders,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("❌ [Student API] deleteStudent failed:", errorText);
+      throw new Error(
+        `API Error: ${response.status} - ${response.statusText} - ${errorText}`
+      );
+    }
+
+    console.log("✅ [Student API] deleteStudent success");
+  }
 }
 
 export const studentApi = new StudentApi();
