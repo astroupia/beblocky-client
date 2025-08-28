@@ -76,8 +76,20 @@ export function CourseDetailsDialog({
 
   // Get user ID from session
   const { data: session } = useSession();
-  const userId = session?.user?.id;
   const { subscription } = useSubscription();
+
+  // Use the same pattern as in user.ts to safely access user ID
+  const userId = (() => {
+    if (session && typeof session === "object" && "user" in session) {
+      const user = (session as { user: { id: string; email?: string } }).user;
+      return user?.id;
+    }
+    return undefined;
+  })();
+
+  // Validate userId to ensure it's not null/undefined/empty
+  const isValidUserId =
+    userId && typeof userId === "string" && userId.trim().length > 0;
 
   // Fetch lesson data for duration calculation
   useEffect(() => {

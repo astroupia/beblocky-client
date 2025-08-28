@@ -3,9 +3,7 @@ export const MAINTENANCE_CONFIG = {
   // Set to true to enable maintenance mode
   enabled: false,
 
-  allowedIPs: [
-    // Add your IP addresses here if needed
-  ],
+  allowedIPs: [] as string[],
 
   // Optional: Maintenance message customization
   message: {
@@ -32,7 +30,9 @@ export const isIPAllowed = (ip: string): boolean => {
 
 // Helper function to check if a user agent is allowed to bypass maintenance
 export const isUserAgentAllowed = (userAgent: string): boolean => {
-  return MAINTENANCE_CONFIG.allowedUserAgents.some((allowed) =>
+  // Check if allowedUserAgents exists, otherwise return false
+  const allowedUserAgents = (MAINTENANCE_CONFIG as any).allowedUserAgents || [];
+  return allowedUserAgents.some((allowed: string) =>
     userAgent.toLowerCase().includes(allowed.toLowerCase())
   );
 };

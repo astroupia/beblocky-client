@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import {
   isMaintenanceModeEnabled,
   isIPAllowed,
+  isUserAgentAllowed,
 } from "@/lib/config/maintenance";
 
 // Add paths that should be accessible without authentication
@@ -43,7 +44,9 @@ export async function middleware(request: NextRequest) {
 
     // Get client IP and user agent for bypass checks
     const clientIP =
-      request.ip || request.headers.get("x-forwarded-for") || "unknown";
+      request.headers.get("x-forwarded-for") ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
     const userAgent = request.headers.get("user-agent") || "";
 
     // Check if client is allowed to bypass maintenance mode
