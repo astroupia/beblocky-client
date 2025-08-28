@@ -81,9 +81,11 @@ export default function SignInPage() {
 
       console.log("Sign-in result:", result);
 
-      if ("error" in result && result.error?.message) {
+      // Check if there's an error or no data (failed sign-in)
+      if (result.error || !result.data) {
         // Handle specific authentication errors with toast
-        const errorMessage = result.error.message;
+        const errorMessage =
+          result.error?.message || "Sign-in failed. Please try again.";
 
         if (
           errorMessage.includes("Invalid email") ||

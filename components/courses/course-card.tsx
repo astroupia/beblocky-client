@@ -3,8 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Star, Clock, Users } from "lucide-react";
+import { BookOpen, Star, Clock, Users, Play } from "lucide-react";
 import { motion } from "framer-motion";
+import { useSession } from "@/lib/auth-client";
+import { encryptEmail } from "@/lib/utils";
 import { LanguageLogo } from "@/components/shared/language-logos";
 import type { ICourse } from "@/types/course";
 
@@ -38,11 +40,38 @@ export function CourseCard({
   onEnroll,
   onAddToPlan,
 }: CourseCardProps) {
+  const { data: session } = useSession();
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // If enrolled and user is a student, navigate to IDE
+    if (isEnrolled && userType === "student" && session?.user?.email) {
+      e.preventDefault();
+      e.stopPropagation();
+      const encryptedEmail = encryptEmail(session.user.email);
+      const courseUrl = `https://ide.beblocky.com/courses/${course._id}/learn/user/${encryptedEmail}`;
+      window.location.href = courseUrl;
+    } else {
+      // Otherwise, show course details
+      onViewDetails(course);
+    }
+  };
+
+  const handleLearnButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isEnrolled && userType === "student" && session?.user?.email) {
+      const encryptedEmail = encryptEmail(session.user.email);
+      const courseUrl = `https://ide.beblocky.com/courses/${course._id}/learn/user/${encryptedEmail}`;
+      window.location.href = courseUrl;
+    } else {
+      onViewDetails(course);
+    }
+  };
+
   return (
     <motion.div variants={itemVariants} initial="hidden" animate="visible">
       <Card
         className="h-full shadow-md hover:shadow-lg transition-all duration-300 group cursor-pointer bg-white/80 dark:bg-black/20 backdrop-blur-sm"
-        onClick={() => onViewDetails(course)}
+        onClick={handleCardClick}
       >
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between mb-3">
@@ -57,10 +86,7 @@ export function CourseCard({
               {course.subType}
             </Badge>
           </div>
-          <CardTitle
-            className="text-sm sm:text-base font-semibold group-hover:text-primary transition-colors line-clamp-2"
-            onClick={() => onViewDetails(course)}
-          >
+          <CardTitle className="text-sm sm:text-base font-semibold group-hover:text-primary transition-colors line-clamp-2">
             {course.courseTitle}
           </CardTitle>
           <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
@@ -98,12 +124,16 @@ export function CourseCard({
               <Button
                 size="sm"
                 className="flex-1"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onViewDetails(course);
-                }}
+                onClick={handleLearnButtonClick}
               >
-                View Details
+                {isEnrolled && userType === "student" ? (
+                  <>
+                    <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    Learn
+                  </>
+                ) : (
+                  "View Details"
+                )}
               </Button>
               {userType === "parent"
                 ? // Parent logic: Show Add to Plan only if course is not covered by subscription
