@@ -9,7 +9,11 @@
     "lint": "next lint",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "maintenance:status": "node scripts/toggle-maintenance.js status",
+    "maintenance:on": "node scripts/toggle-maintenance.js on",
+    "maintenance:off": "node scripts/toggle-maintenance.js off",
+    "maintenance:toggle": "node scripts/toggle-maintenance.js"
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",

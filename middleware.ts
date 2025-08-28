@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import {
+  isMaintenanceModeEnabled,
+  isIPAllowed,
+} from "@/lib/config/maintenance";
 
 // Add paths that should be accessible without authentication
-const publicPaths = ["/sign-in", "/sign-up", "/reset-password"];
+const publicPaths = ["/sign-in", "/sign-up", "/reset-password", "/maintenance"];
 
 // Add regex patterns for Better Auth callback URLs
 const publicPathPatterns = [
   /^\/sign-in/,
   /^\/sign-up/,
   /^\/reset-password/,
+  /^\/maintenance/,
   /^\/api\/auth\/reset-password\/[^?]+/, // Better Auth reset password callback
   /^\/api\/auth\/[^/]+\/[^?]+/, // General Better Auth callbacks
 ];
@@ -28,6 +33,28 @@ export async function middleware(request: NextRequest) {
     request.cookies.get("__Host-better-auth.session_token")?.value ||
     request.cookies.get("authjs.session-token")?.value ||
     request.cookies.get("__Secure-authjs.session-token")?.value;
+
+  // Maintenance mode check
+  if (isMaintenanceModeEnabled()) {
+    // Allow access to maintenance page itself
+    if (pathname === "/maintenance") {
+      return NextResponse.next();
+    }
+
+    // Get client IP and user agent for bypass checks
+    const clientIP =
+      request.ip || request.headers.get("x-forwarded-for") || "unknown";
+    const userAgent = request.headers.get("user-agent") || "";
+
+    // Check if client is allowed to bypass maintenance mode
+    const isAllowedIP = isIPAllowed(clientIP);
+    const isAllowedUserAgent = isUserAgentAllowed(userAgent);
+
+    // If not allowed to bypass, redirect to maintenance page
+    if (!isAllowedIP && !isAllowedUserAgent) {
+      return NextResponse.redirect(new URL("/maintenance", request.url));
+    }
+  }
 
   // If not logged in and trying to access protected page (including root "/")
   if (!sessionToken && !isPublicPath) {

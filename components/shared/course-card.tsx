@@ -102,11 +102,11 @@ export function CourseCard({
 
   const handleCardClick = () => {
     if (isEnrolled) {
-      // Navigate to IDE
+      // Navigate to IDE in same tab
       if (session?.user?.email) {
         const encryptedEmail = encryptEmail(session.user.email);
         const courseUrl = `https://ide.beblocky.com/courses/${course._id}/learn/user/${encryptedEmail}`;
-        window.open(courseUrl);
+        window.location.href = courseUrl;
       }
     } else {
       // Show enrollment dialog
@@ -146,7 +146,7 @@ export function CourseCard({
           <CardContent className="pt-0">
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-3 text-sm">
-                <div className="flex items-center gap-2 justify-center rounded-md bg-muted/40 py-2">
+                <div className="flex items-center gap-2 justify-center rounded-md lag-muted/40 py-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span>{totalHours}h</span>
                 </div>
