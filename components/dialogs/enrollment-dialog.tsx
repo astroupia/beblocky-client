@@ -53,7 +53,7 @@ export function EnrollmentDialog({
         if (session?.user?.email) {
           const encryptedEmail = encryptEmail(session.user.email);
           const courseUrl = `https://ide.beblocky.com/courses/${course._id}/learn/user/${encryptedEmail}`;
-          window.open(courseUrl, "_blank");
+          window.location.href = courseUrl;
         }
         onClose();
         return;
@@ -82,7 +82,7 @@ export function EnrollmentDialog({
       if (session?.user?.email) {
         const encryptedEmail = encryptEmail(session.user.email);
         const courseUrl = `https://ide.beblocky.com/courses/${course._id}/learn/user/${encryptedEmail}`;
-        window.open(courseUrl, "_blank");
+        window.location.href = courseUrl;
       }
     } catch (error) {
       console.error("Failed to enroll in course:", error);

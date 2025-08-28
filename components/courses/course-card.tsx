@@ -165,6 +165,7 @@ export function CourseCard({
                       <Button
                         size="sm"
                         variant="outline"
+                        className="cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
                           onEnroll(course._id);
