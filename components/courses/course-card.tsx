@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Star, Clock, Users, Play } from "lucide-react";
+import { BookOpen, Star, Clock, Users, Play, Eye } from "lucide-react";
 import { motion } from "framer-motion";
 import { useSession } from "@/lib/auth-client";
 import { encryptEmail } from "@/lib/utils";
@@ -67,6 +67,11 @@ export function CourseCard({
     }
   };
 
+  const handleDetailsButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onViewDetails(course);
+  };
+
   return (
     <motion.div variants={itemVariants} initial="hidden" animate="visible">
       <Card
@@ -120,21 +125,38 @@ export function CourseCard({
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 pt-2">
-              <Button
-                size="sm"
-                className="flex-1"
-                onClick={handleLearnButtonClick}
-              >
-                {isEnrolled && userType === "student" ? (
-                  <>
+            <div className="flex flex-col gap-2 pt-2">
+              {isEnrolled && userType === "student" ? (
+                // Show both Learn and Details buttons for enrolled students
+                <>
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={handleLearnButtonClick}
+                  >
                     <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                     Learn
-                  </>
-                ) : (
-                  "View Details"
-                )}
-              </Button>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    onClick={handleDetailsButtonClick}
+                  >
+                    <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 cursor-pointer" />
+                    Details
+                  </Button>
+                </>
+              ) : (
+                // Show single button for non-enrolled users
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={handleLearnButtonClick}
+                >
+                  View Details
+                </Button>
+              )}
               {userType === "parent"
                 ? // Parent logic: Show Add to Plan only if course is not covered by subscription
                   !canAccess &&
@@ -142,6 +164,7 @@ export function CourseCard({
                     <Button
                       size="sm"
                       variant="outline"
+                      className="w-full cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
                         onAddToPlan(course._id);
@@ -155,7 +178,10 @@ export function CourseCard({
                     const showEnrolled = isEnrolled && canAccess;
                     if (showEnrolled) {
                       return (
-                        <Badge variant="secondary" className="px-3 py-1">
+                        <Badge
+                          variant="secondary"
+                          className="w-full px-3 py-1 text-center"
+                        >
                           Enrolled
                         </Badge>
                       );
@@ -165,7 +191,7 @@ export function CourseCard({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="cursor-pointer"
+                        className="w-full"
                         onClick={(e) => {
                           e.stopPropagation();
                           onEnroll(course._id);
